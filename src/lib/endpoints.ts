@@ -19,6 +19,8 @@ export const API_ENDPOINTS = {
     VENDORS: `${API_BASE_URL}/auth/vendors`,
     APPROVE_VENDOR: (id: string) => `${API_BASE_URL}/auth/vendors/${id}/approve`,
     REJECT_VENDOR: (id: string) => `${API_BASE_URL}/auth/vendors/${id}/reject`,
+    CHECKERS: `${API_BASE_URL}/auth/checkers`,
+    DELETE_CHECKER: (id: string) => `${API_BASE_URL}/auth/checkers/${id}`,
   },
 
   // Products
@@ -49,6 +51,24 @@ export const API_ENDPOINTS = {
     BY_ID: (id: string) => `${API_BASE_URL}/subcategories/${id}`,
     UPDATE: (id: string) => `${API_BASE_URL}/subcategories/${id}`,
     DELETE: (id: string) => `${API_BASE_URL}/subcategories/${id}`,
+  },
+
+  // Orders & Quality Inspection
+  ORDERS: {
+    LIST: `${API_BASE_URL}/orders`,
+    CREATE: `${API_BASE_URL}/orders`,
+    BY_ID: (id: string) => `${API_BASE_URL}/orders/${id}`,
+    ASSIGN_VENDOR: (id: string) => `${API_BASE_URL}/orders/${id}/assign-vendor`,
+    VENDOR_PROGRESS: (id: string) => `${API_BASE_URL}/orders/${id}/vendor-progress`,
+    INSPECTION: (id: string) => `${API_BASE_URL}/orders/${id}/inspection`,
+  },
+
+  // Customer Support & Chat
+  SUPPORT: {
+    LIST: `${API_BASE_URL}/support`,
+    CREATE: `${API_BASE_URL}/support`,
+    ADD_MESSAGE: (id: string) => `${API_BASE_URL}/support/${id}/messages`,
+    UPDATE_STATUS: (id: string) => `${API_BASE_URL}/support/${id}/status`,
   },
 
   // Health

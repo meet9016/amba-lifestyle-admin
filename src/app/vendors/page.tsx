@@ -37,47 +37,8 @@ interface Vendor {
   createdAt?: string;
 }
 
-const FALLBACK_VENDORS: Vendor[] = [
-  {
-    _id: 'v-1',
-    name: 'Sunita Sharma',
-    email: 'vendor@ambalifestyle.com',
-    role: 'vendor',
-    storeName: 'Royal Jaipur Silks',
-    vendorCategory: 'Ethnic Wear',
-    phone: '+91 98765 11223',
-    isApproved: true,
-    vendorApprovalStatus: 'approved',
-    createdAt: '2026-03-10'
-  },
-  {
-    _id: 'v-2',
-    name: 'Bashir Ahmed',
-    email: 'artisan@kashmirloom.com',
-    role: 'vendor',
-    storeName: 'Kashmir Loom Masters',
-    vendorCategory: 'Textiles & Rugs',
-    phone: '+91 98451 99887',
-    isApproved: false,
-    vendorApprovalStatus: 'pending',
-    createdAt: '2026-03-14'
-  },
-  {
-    _id: 'v-3',
-    name: 'Kavita Iyer',
-    email: 'kavita@tanjoreart.in',
-    role: 'vendor',
-    storeName: 'Tanjore Sacred Crafts',
-    vendorCategory: 'Art & Pottery',
-    phone: '+91 97112 33445',
-    isApproved: false,
-    vendorApprovalStatus: 'pending',
-    createdAt: '2026-03-15'
-  }
-];
-
 export default function VendorsApprovalPage() {
-  const [vendors, setVendors] = useState<Vendor[]>(FALLBACK_VENDORS);
+  const [vendors, setVendors] = useState<Vendor[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -528,12 +489,12 @@ export default function VendorsApprovalPage() {
 
                               {isApproved && (
                                 <div className="flex items-center gap-2">
-                                  <span className="text-xs text-emerald-700 font-medium bg-emerald-50 px-2 py-1 rounded border border-emerald-200">
+                                  <span className="text-xs text-emerald-700 font-semibold bg-emerald-50 px-2.5 py-1.5 rounded-xl border border-emerald-200">
                                     Can Login ✓
                                   </span>
                                   <button
                                     onClick={() => handleRejectVendor(vendor)}
-                                    className="text-xs text-rose-600 hover:text-rose-800 font-medium px-2 py-1 rounded hover:bg-rose-50"
+                                    className="h-8.5 px-3 text-xs text-rose-700 hover:bg-rose-50 border border-rose-200 hover:border-rose-300 font-semibold rounded-xl transition-all shadow-2xs active:scale-[0.98]"
                                   >
                                     Suspend
                                   </button>

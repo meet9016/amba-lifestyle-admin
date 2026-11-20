@@ -15,20 +15,24 @@ export const Button: React.FC<ButtonProps> = ({
   disabled,
   ...props
 }) => {
-  const baseStyles = 'inline-flex items-center justify-center font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
+  const baseStyles =
+    'inline-flex items-center justify-center font-semibold rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] select-none';
 
   const variants = {
-    primary: 'bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-indigo-500',
-    secondary: 'bg-zinc-800 text-white hover:bg-zinc-700 focus:ring-zinc-600',
-    outline: 'border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 focus:ring-zinc-400',
-    danger: 'bg-rose-600 text-white hover:bg-rose-700 focus:ring-rose-500',
-    ghost: 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+    primary:
+      'bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-indigo-500 shadow-sm hover:shadow-indigo-600/25',
+    secondary: 'bg-zinc-900 text-white hover:bg-zinc-800 focus:ring-zinc-600 shadow-sm',
+    outline:
+      'border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50 hover:border-zinc-300 hover:text-zinc-900 focus:ring-zinc-300 shadow-2xs',
+    danger:
+      'bg-rose-600 text-white hover:bg-rose-700 focus:ring-rose-500 shadow-sm hover:shadow-rose-600/25',
+    ghost: 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 shadow-none'
   };
 
   const sizes = {
-    sm: 'px-3 py-1.5 text-xs',
-    md: 'px-4 py-2 text-sm',
-    lg: 'px-6 py-2.5 text-base'
+    sm: 'h-9 px-3.5 py-2 text-xs gap-1.5',
+    md: 'h-11 px-5 py-2.5 text-sm gap-2',
+    lg: 'h-13 px-6 py-3 text-base gap-2.5'
   };
 
   return (
@@ -49,4 +53,3 @@ export const Button: React.FC<ButtonProps> = ({
     </button>
   );
 };
-

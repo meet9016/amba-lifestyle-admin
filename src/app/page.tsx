@@ -32,43 +32,21 @@ interface ApprovalProduct {
   createdAt?: string;
 }
 
-const INITIAL_PENDING_APPROVALS: ApprovalProduct[] = [
-  {
-    id: '5',
-    title: 'Hand-painted Blue Pottery Floral Ceramic Dinner Set (18 Pcs)',
-    vendorName: 'Jaipur Weaves & Crafts',
-    category: 'Home Decor',
-    price: 4599,
-    stock: 15,
-    imageUrl: 'https://images.unsplash.com/photo-1615529182904-14819c35db37?auto=format&fit=crop&w=300&q=80',
-    approvalStatus: 'pending',
-    createdAt: 'Today, 08:30 AM'
-  },
-  {
-    id: '6',
-    title: 'Hand-spun Pashmina Cashmere Shawl with Sozni Needle Embroidery',
-    vendorName: 'Kashmir Loom Masters',
-    category: 'Ethnic Wear',
-    price: 12499,
-    stock: 8,
-    imageUrl: 'https://images.unsplash.com/photo-1609357605129-26f69add5d6e?auto=format&fit=crop&w=300&q=80',
-    approvalStatus: 'pending',
-    createdAt: 'Today, 09:15 AM'
-  }
-];
+const INITIAL_PENDING_APPROVALS: ApprovalProduct[] = [];
 
 export default function AdminDashboard() {
-  const [pendingList, setPendingList] = useState<ApprovalProduct[]>(INITIAL_PENDING_APPROVALS);
+  const [pendingList, setPendingList] = useState<ApprovalProduct[]>([]);
+  const [vendorCount, setVendorCount] = useState<number>(0);
   const [actionSuccessMessage, setActionSuccessMessage] = useState<string | null>(null);
 
   // Fetch pending products from backend if running
   useEffect(() => {
-    const fetchPendingProducts = async () => {
+    const fetchDashboardData = async () => {
       try {
         const res = await apiClient.get(API_ENDPOINTS.PRODUCTS.PENDING, {
           headers: { 'x-user-role': 'admin' }
         });
-        if (res.data?.data && res.data.data.length > 0) {
+        if (res.data?.data) {
           const mapped = res.data.data.map((item: any) => ({
             id: item._id,
             title: item.title,
@@ -78,15 +56,26 @@ export default function AdminDashboard() {
             stock: item.stock,
             imageUrl: item.images?.[0] || 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=300&q=80',
             approvalStatus: item.approvalStatus || 'pending',
-            createdAt: 'Recently'
+            createdAt: item.createdAt ? new Date(item.createdAt).toLocaleDateString() : 'Recently'
           }));
           setPendingList(mapped);
+        } else {
+          setPendingList([]);
         }
       } catch (_) {
-        // Backend offline: keep initial state
+        setPendingList([]);
       }
+
+      try {
+        const vRes = await apiClient.get(API_ENDPOINTS.AUTH.VENDORS, {
+          headers: { 'x-user-role': 'admin' }
+        });
+        if (vRes.data?.data) {
+          setVendorCount(vRes.data.data.filter((v: any) => v.vendorApprovalStatus === 'approved').length);
+        }
+      } catch (_) {}
     };
-    fetchPendingProducts();
+    fetchDashboardData();
   }, []);
 
   // Handle Approve
@@ -121,7 +110,7 @@ export default function AdminDashboard() {
     { title: 'Pending Approval Queue', value: `${pendingList.length} items`, change: 'Requires Action', icon: Clock, color: 'text-amber-600', bg: 'bg-amber-50' },
     { title: 'Total Revenue', value: '₹14,82,500', change: '+18.2%', icon: DollarSign, color: 'text-emerald-600', bg: 'bg-emerald-50' },
     { title: 'Total Orders', value: '1,280', change: '+8.4%', icon: ShoppingBag, color: 'text-indigo-600', bg: 'bg-indigo-50' },
-    { title: 'Verified Vendors', value: '28', change: '+4.0%', icon: Store, color: 'text-sky-600', bg: 'bg-sky-50' },
+    { title: 'Verified Vendors', value: `${vendorCount}`, change: 'Active Live', icon: Store, color: 'text-sky-600', bg: 'bg-sky-50' },
   ];
 
   return (
@@ -150,20 +139,20 @@ export default function AdminDashboard() {
                 Review handcrafted submissions from vendors. Approved products instantly go live on the customer storefront.
               </p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2.5">
               <a
                 href="/vendors"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-50 border border-indigo-200 text-xs font-semibold text-indigo-700 hover:bg-indigo-100 transition-colors"
+                className="inline-flex items-center gap-2 h-9 px-4 rounded-xl bg-indigo-50 border border-indigo-200 text-xs font-semibold text-indigo-700 hover:bg-indigo-100 hover:border-indigo-300 transition-all shadow-2xs active:scale-[0.98]"
               >
-                <Store className="w-3.5 h-3.5" /> Vendor Approvals
+                <Store className="w-4 h-4" /> Vendor Approvals
               </a>
               <a
-                href="http://localhost:3000"
+                href="http://localhost:3001"
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-200 text-xs font-semibold text-zinc-700 hover:bg-zinc-100 transition-colors"
+                className="inline-flex items-center gap-2 h-9 px-4 rounded-xl border border-zinc-200 bg-white text-xs font-semibold text-zinc-700 hover:bg-zinc-50 hover:border-zinc-300 transition-all shadow-2xs active:scale-[0.98]"
               >
-                <ExternalLink className="w-3.5 h-3.5" /> View Storefront
+                <ExternalLink className="w-4 h-4" /> View Storefront
               </a>
             </div>
           </div>
@@ -243,15 +232,15 @@ export default function AdminDashboard() {
                           <div className="inline-flex items-center gap-2">
                             <button
                               onClick={() => handleReject(p)}
-                              className="px-3 py-1.5 rounded-lg border border-rose-200 text-rose-700 hover:bg-rose-50 text-xs font-semibold transition-colors flex items-center gap-1"
+                              className="h-9 px-3.5 rounded-xl border border-rose-200 bg-white text-rose-700 hover:bg-rose-50 hover:border-rose-300 text-xs font-semibold transition-all shadow-2xs flex items-center gap-1.5 active:scale-[0.98]"
                             >
-                              <XCircle className="w-3.5 h-3.5" /> Reject
+                              <XCircle className="w-4 h-4" /> Reject
                             </button>
                             <button
                               onClick={() => handleApprove(p)}
-                              className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition-colors shadow-xs flex items-center gap-1"
+                              className="h-9 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition-all shadow-xs flex items-center gap-1.5 active:scale-[0.98]"
                             >
-                              <CheckCircle2 className="w-3.5 h-3.5" /> Approve & Publish
+                              <CheckCircle2 className="w-4 h-4" /> Approve & Publish
                             </button>
                           </div>
                         </td>

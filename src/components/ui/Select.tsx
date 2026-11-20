@@ -20,6 +20,26 @@ interface SelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>
   size?: 'sm' | 'md' | 'lg';
 }
 
+const renderLabel = (label: string, required?: boolean) => {
+  if (!label) return null;
+  if (label.includes('*')) {
+    const parts = label.split('*');
+    return (
+      <>
+        {parts[0]}
+        <span className="text-rose-500 font-bold ml-0.5">*</span>
+        {parts.slice(1).join('*')}
+      </>
+    );
+  }
+  return (
+    <>
+      {label}
+      {required && <span className="text-rose-500 font-bold ml-0.5">*</span>}
+    </>
+  );
+};
+
 export const Select: React.FC<SelectProps> = ({
   label,
   error,
@@ -138,7 +158,7 @@ export const Select: React.FC<SelectProps> = ({
           htmlFor={selectId}
           className="block text-xs font-semibold text-zinc-700 tracking-wide select-none"
         >
-          {label}
+          {renderLabel(label, props.required)}
         </label>
       )}
 

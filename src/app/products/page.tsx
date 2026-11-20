@@ -372,11 +372,11 @@ export default function AdminProductsPage() {
                           )}
                         </td>
                         <td className="py-3 text-right">
-                          <div className="inline-flex items-center gap-1.5">
+                          <div className="inline-flex items-center gap-2">
                             {/* Inspect / View Details Button */}
                             <button
                               onClick={() => handleOpenDetails(p)}
-                              className="inline-flex items-center gap-1 px-2.5 py-1 text-xs border border-zinc-200 text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 rounded-lg font-medium transition-colors shadow-2xs"
+                              className="inline-flex items-center gap-1.5 h-8.5 px-3 text-xs border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50 hover:border-zinc-300 hover:text-zinc-900 rounded-xl font-semibold transition-all shadow-2xs active:scale-[0.98]"
                               title="Inspect Full Specifications & Story"
                             >
                               <Eye className="w-3.5 h-3.5 text-zinc-500" />
@@ -387,13 +387,13 @@ export default function AdminProductsPage() {
                               <>
                                 <button
                                   onClick={() => handleOpenRejectModal(p)}
-                                  className="px-2.5 py-1 text-xs border border-rose-200 text-rose-700 hover:bg-rose-50 rounded-lg font-medium transition-colors"
+                                  className="h-8.5 px-3 text-xs border border-rose-200 bg-white text-rose-700 hover:bg-rose-50 hover:border-rose-300 rounded-xl font-semibold transition-all shadow-2xs active:scale-[0.98]"
                                 >
                                   Reject
                                 </button>
                                 <button
                                   onClick={() => handleApprove(p)}
-                                  className="px-2.5 py-1 text-xs bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition-colors shadow-xs"
+                                  className="h-8.5 px-3.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold transition-all shadow-xs hover:shadow-emerald-600/25 active:scale-[0.98]"
                                 >
                                   Approve
                                 </button>
@@ -402,7 +402,7 @@ export default function AdminProductsPage() {
                             {p.approvalStatus === 'approved' && (
                               <button
                                 onClick={() => handleOpenRejectModal(p)}
-                                className="px-2.5 py-1 text-xs text-zinc-500 hover:text-rose-600 rounded-lg hover:bg-zinc-100 transition-colors"
+                                className="h-8.5 px-3 text-xs border border-zinc-200 bg-white text-zinc-600 hover:text-rose-600 hover:bg-rose-50 hover:border-rose-200 rounded-xl font-semibold transition-all shadow-2xs active:scale-[0.98]"
                               >
                                 Revoke
                               </button>
@@ -410,7 +410,7 @@ export default function AdminProductsPage() {
                             {p.approvalStatus === 'rejected' && (
                               <button
                                 onClick={() => handleApprove(p)}
-                                className="px-2.5 py-1 text-xs text-zinc-500 hover:text-emerald-600 rounded-lg hover:bg-zinc-100 transition-colors"
+                                className="h-8.5 px-3 text-xs border border-emerald-200 bg-white text-emerald-700 hover:bg-emerald-50 hover:border-emerald-300 rounded-xl font-semibold transition-all shadow-2xs active:scale-[0.98]"
                               >
                                 Re-approve
                               </button>
@@ -466,15 +466,15 @@ export default function AdminProductsPage() {
                       onClick={() => {
                         handleOpenRejectModal(selectedProduct);
                       }}
-                      className="px-3 py-1.5 text-xs font-semibold border border-rose-200 text-rose-700 hover:bg-rose-50 rounded-xl transition-colors"
+                      className="h-10 px-4 text-xs font-semibold border border-rose-200 bg-white text-rose-700 hover:bg-rose-50 hover:border-rose-300 rounded-xl transition-all shadow-2xs active:scale-[0.98]"
                     >
                       Reject Submission
                     </button>
                     <button
                       onClick={() => handleApprove(selectedProduct)}
-                      className="px-3.5 py-1.5 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-xs transition-colors flex items-center gap-1.5"
+                      className="h-10 px-4 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-xs hover:shadow-emerald-600/25 transition-all flex items-center gap-1.5 active:scale-[0.98]"
                     >
-                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <CheckCircle2 className="w-4 h-4" />
                       Approve & Publish to Storefront
                     </button>
                   </>
@@ -484,17 +484,17 @@ export default function AdminProductsPage() {
                   <>
                     <button
                       onClick={() => handleOpenRejectModal(selectedProduct)}
-                      className="px-3 py-1.5 text-xs font-semibold border border-zinc-200 text-zinc-700 hover:bg-zinc-100 rounded-xl transition-colors"
+                      className="h-10 px-4 text-xs font-semibold border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50 hover:border-zinc-300 rounded-xl transition-all shadow-2xs active:scale-[0.98]"
                     >
                       Revoke Approval
                     </button>
                     <a
-                      href={`http://localhost:3000/product/${selectedProduct.id}`}
+                      href={`http://localhost:3001/product/${selectedProduct.id}`}
                       target="_blank"
                       rel="noreferrer"
-                      className="px-3.5 py-1.5 text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-xs transition-colors inline-flex items-center gap-1.5"
+                      className="h-10 px-4 text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-xs hover:shadow-indigo-600/25 transition-all inline-flex items-center gap-1.5 active:scale-[0.98]"
                     >
-                      <ExternalLink className="w-3.5 h-3.5" />
+                      <ExternalLink className="w-4 h-4" />
                       View on Storefront
                     </a>
                   </>
@@ -503,9 +503,9 @@ export default function AdminProductsPage() {
                 {selectedProduct.approvalStatus === 'rejected' && (
                   <button
                     onClick={() => handleApprove(selectedProduct)}
-                    className="px-3.5 py-1.5 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-xs transition-colors flex items-center gap-1.5"
+                    className="h-10 px-4 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-xs hover:shadow-emerald-600/25 transition-all flex items-center gap-1.5 active:scale-[0.98]"
                   >
-                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <CheckCircle2 className="w-4 h-4" />
                     Re-approve Product
                   </button>
                 )}

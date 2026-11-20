@@ -23,3 +23,37 @@ body {
   font-family: Arial, Helvetica, sans-serif;
   min-height: 100vh;
 }
+
+/* ======================================================== */
+/* GLOBAL CURSOR POINTER FOR ALL CLICKABLE / INTERACTIVE ITEMS */
+/* ======================================================== */
+button,
+[role="button"],
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+input[type="checkbox"],
+input[type="radio"],
+input[type="file"]::-webkit-file-upload-button,
+select,
+summary,
+a,
+a *,
+label[for],
+label:has(input[type="checkbox"]),
+label:has(input[type="radio"]),
+.cursor-pointer,
+[onclick],
+[tabindex="0"] {
+  cursor: pointer !important;
+}
+
+button:disabled,
+button[disabled],
+input:disabled,
+select:disabled,
+textarea:disabled,
+[role="button"][aria-disabled="true"],
+.disabled {
+  cursor: not-allowed !important;
+}
