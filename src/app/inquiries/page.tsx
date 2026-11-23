@@ -34,6 +34,8 @@ import {
 import { AdminSidebar } from '@/components/layout/AdminSidebar';
 import { AdminHeader } from '@/components/layout/AdminHeader';
 import { apiClient, API_ENDPOINTS } from '@/lib/api';
+import { Modal } from '@/components/ui/Modal';
+import { Button } from '@/components/ui/Button';
 
 export interface InquiryMessage {
   _id?: string;
@@ -90,6 +92,11 @@ export default function AdminInquiriesPage() {
   const [adminReplyText, setAdminReplyText] = useState<string>('');
   const [isSendingReply, setIsSendingReply] = useState<boolean>(false);
   const [isRefreshingInquiry, setIsRefreshingInquiry] = useState<boolean>(false);
+
+  // Common Delete Confirmation Modal State
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
+  const [inquiryToDelete, setInquiryToDelete] = useState<CustomerInquiry | null>(null);
+  const [isDeletingInquiry, setIsDeletingInquiry] = useState<boolean>(false);
 
   const fetchInquiries = async () => {
     setLoading(true);
@@ -175,7 +182,7 @@ export default function AdminInquiriesPage() {
     if (inqKey && inq.messages && inq.messages.some(m => (m.sender === 'customer' || !m.sender) && !m.isSeen && !m.readByAdmin)) {
       apiClient.put(API_ENDPOINTS.INQUIRIES.MARK_MESSAGES_READ(inqKey), {}, {
         headers: { 'x-user-role': 'admin' }
-      }).catch(() => {});
+      }).catch(() => { });
     }
 
     // Immediately fetch latest live messages without needing page refresh!
@@ -266,8 +273,16 @@ export default function AdminInquiriesPage() {
     }
   };
 
-  const handleDelete = async (id: string, inqNum: string) => {
-    if (!confirm(`Are you sure you want to delete inquiry #${inqNum}?`)) return;
+  const handleOpenDeleteModal = (inq: CustomerInquiry) => {
+    setInquiryToDelete(inq);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleConfirmDeleteInquiry = async () => {
+    if (!inquiryToDelete) return;
+    const id = inquiryToDelete._id || inquiryToDelete.inquiryNumber;
+    const inqNum = inquiryToDelete.inquiryNumber;
+    setIsDeletingInquiry(true);
     try {
       await apiClient.delete(API_ENDPOINTS.INQUIRIES.DELETE(id), {
         headers: { 'x-user-role': 'admin' }
@@ -276,10 +291,14 @@ export default function AdminInquiriesPage() {
         type: 'success',
         message: `Inquiry #${inqNum} deleted successfully.`
       });
-      fetchInquiries();
+      setInquiries(prev => prev.filter(item => (item._id !== id && item.inquiryNumber !== inqNum)));
+      setIsDeleteModalOpen(false);
+      setInquiryToDelete(null);
       setTimeout(() => setNotification(null), 4000);
     } catch (err: any) {
-      alert('Failed to delete inquiry');
+      alert(err.response?.data?.message || 'Failed to delete inquiry');
+    } finally {
+      setIsDeletingInquiry(false);
     }
   };
 
@@ -862,7 +881,7 @@ export default function AdminInquiriesPage() {
                                 Review
                               </button>
                               <button
-                                onClick={() => handleDelete(inq._id || inq.inquiryNumber, inq.inquiryNumber)}
+                                onClick={() => handleOpenDeleteModal(inq)}
                                 className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer"
                                 title="Delete inquiry"
                               >
@@ -1042,11 +1061,10 @@ export default function AdminInquiriesPage() {
                         return (
                           <div
                             key={msg._id || mIdx}
-                            className={`p-2.5 rounded-xl text-xs space-y-1 ${
-                              isCustomer
+                            className={`p-2.5 rounded-xl text-xs space-y-1 ${isCustomer
                                 ? 'bg-amber-50/70 border border-amber-200/80 text-amber-950'
                                 : 'bg-indigo-50/70 border border-indigo-200/80 text-indigo-950 ml-4'
-                            }`}
+                              }`}
                           >
                             <div className="flex items-center justify-between text-[10px]">
                               <span className={`font-bold uppercase tracking-wider ${isCustomer ? 'text-amber-800' : 'text-indigo-800'}`}>
@@ -1194,6 +1212,76 @@ export default function AdminInquiriesPage() {
           </div>
         </div>
       )}
+
+      {/* ======================================================== */}
+      {/* COMMON DELETE CONFIRMATION MODAL                         */}
+      {/* ======================================================== */}
+      <Modal
+        isOpen={isDeleteModalOpen}
+        onClose={() => !isDeletingInquiry && setIsDeleteModalOpen(false)}
+        title="Delete Inquiry Confirmation"
+        maxWidth="max-w-md"
+        footer={
+          <div className="flex items-center justify-end gap-2.5 w-full">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsDeleteModalOpen(false)}
+              disabled={isDeletingInquiry}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={handleConfirmDeleteInquiry}
+              disabled={isDeletingInquiry}
+              className="bg-rose-600 hover:bg-rose-700 text-white font-bold flex items-center gap-1.5 cursor-pointer shadow-sm"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>{isDeletingInquiry ? 'Deleting...' : 'Yes, Delete Inquiry'}</span>
+            </Button>
+          </div>
+        }
+      >
+        {inquiryToDelete && (
+          <div className="space-y-4 text-center py-2">
+            <div className="w-14 h-14 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 flex items-center justify-center mx-auto shadow-2xs">
+              <Trash2 className="w-7 h-7 text-rose-600" />
+            </div>
+
+            <div>
+              <h3 className="text-base font-bold text-zinc-900">
+                Delete Inquiry #{inquiryToDelete.inquiryNumber}?
+              </h3>
+              <p className="text-xs text-zinc-500 mt-1 max-w-sm mx-auto leading-relaxed">
+                Are you sure you want to delete this customer inquiry? This action cannot be undone and will permanently remove this inquiry record and all related messages.
+              </p>
+            </div>
+
+            {/* Inquiry Summary Preview */}
+            {/* <div className="p-3 bg-zinc-50 border border-zinc-200/80 rounded-2xl flex items-center gap-3 text-left">
+              <img
+                src={inquiryToDelete.images?.[0] || 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=300&q=80'}
+                alt={inquiryToDelete.name}
+                className="w-12 h-12 rounded-xl object-cover border border-zinc-200 shrink-0 bg-white"
+              />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-xs font-bold text-indigo-700">#{inquiryToDelete.inquiryNumber}</span>
+                  <span className="text-[10px] text-zinc-400 truncate">• {inquiryToDelete.email}</span>
+                </div>
+                <p className="text-xs font-bold text-zinc-900 truncate mt-0.5">
+                  {inquiryToDelete.name}
+                </p>
+                <span className="text-[10px] text-zinc-400">
+                  Size/Spec: {inquiryToDelete.size}
+                </span>
+              </div>
+            </div> */}
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }

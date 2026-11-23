@@ -670,7 +670,7 @@ export default function AdminProductsPage() {
                               title="Edit Product (Image, Name, Price)"
                             >
                               <Edit3 className="w-3.5 h-3.5" />
-                              <span>Edit</span>
+                          
                             </button>
 
                             {/* 2. View Button */}
@@ -680,7 +680,7 @@ export default function AdminProductsPage() {
                               title="View Product Details"
                             >
                               <Eye className="w-3.5 h-3.5 text-zinc-500" />
-                              <span>View</span>
+                      
                             </button>
 
                             {/* 3. Delete Button */}
@@ -690,7 +690,7 @@ export default function AdminProductsPage() {
                               title="Delete Product"
                             >
                               <Trash2 className="w-3.5 h-3.5 text-rose-600" />
-                              <span>Delete</span>
+                          
                             </button>
                           </div>
                         </td>
@@ -1352,7 +1352,7 @@ export default function AdminProductsPage() {
             </div>
 
             {/* Product Summary Preview */}
-            <div className="p-3 bg-zinc-50 border border-zinc-200/80 rounded-2xl flex items-center gap-3 text-left">
+            {/* <div className="p-3 bg-zinc-50 border border-zinc-200/80 rounded-2xl flex items-center gap-3 text-left">
               <img
                 src={productToDelete.imageUrl}
                 alt={productToDelete.title}
@@ -1369,7 +1369,7 @@ export default function AdminProductsPage() {
                   Category: {productToDelete.category}
                 </span>
               </div>
-            </div>
+            </div> */}
           </div>
         )}
       </Modal>
