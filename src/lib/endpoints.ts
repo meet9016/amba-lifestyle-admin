@@ -78,6 +78,8 @@ export const API_ENDPOINTS = {
     BY_ID: (id: string) => `${API_BASE_URL}/inquiries/${id}`,
     UPDATE_STATUS: (id: string) => `${API_BASE_URL}/inquiries/${id}/status`,
     DELETE: (id: string) => `${API_BASE_URL}/inquiries/${id}`,
+    ADD_MESSAGE: (id: string) => `${API_BASE_URL}/inquiries/${id}/messages`,
+    MARK_MESSAGES_READ: (id: string) => `${API_BASE_URL}/inquiries/${id}/messages/read`,
   },
 
   // Health

@@ -27,11 +27,24 @@ import {
   Scissors,
   Crown,
   Armchair,
-  Wand2
+  Wand2,
+  MessageSquare,
+  Send
 } from 'lucide-react';
 import { AdminSidebar } from '@/components/layout/AdminSidebar';
 import { AdminHeader } from '@/components/layout/AdminHeader';
 import { apiClient, API_ENDPOINTS } from '@/lib/api';
+
+export interface InquiryMessage {
+  _id?: string;
+  sender: 'customer' | 'admin';
+  senderName: string;
+  message: string;
+  attachments?: string[];
+  isSeen?: boolean;
+  readByAdmin?: boolean;
+  createdAt: string;
+}
 
 export interface CustomerInquiry {
   _id: string;
@@ -48,6 +61,7 @@ export interface CustomerInquiry {
   status: 'pending' | 'in_review' | 'quoted' | 'approved' | 'rejected';
   quotedPrice?: number;
   adminNotes?: string;
+  messages?: InquiryMessage[];
   timeline?: Array<{
     status: string;
     note: string;
@@ -73,6 +87,9 @@ export default function AdminInquiriesPage() {
   const [newStatus, setNewStatus] = useState<CustomerInquiry['status']>('pending');
   const [quotedPrice, setQuotedPrice] = useState<string>('');
   const [adminNotes, setAdminNotes] = useState<string>('');
+  const [adminReplyText, setAdminReplyText] = useState<string>('');
+  const [isSendingReply, setIsSendingReply] = useState<boolean>(false);
+  const [isRefreshingInquiry, setIsRefreshingInquiry] = useState<boolean>(false);
 
   const fetchInquiries = async () => {
     setLoading(true);
@@ -95,12 +112,124 @@ export default function AdminInquiriesPage() {
     fetchInquiries();
   }, []);
 
+  const getUnseenCount = (inq: CustomerInquiry) => {
+    if (!inq.messages || inq.messages.length === 0) return 0;
+    return inq.messages.filter(
+      (m) => (m.sender === 'customer' || !m.sender) && !m.isSeen && !m.readByAdmin
+    ).length;
+  };
+
+  const refreshSelectedInquiry = async (inq: CustomerInquiry, silent = false) => {
+    const inqKey = inq.inquiryNumber || inq._id;
+    if (!inqKey) return;
+    if (!silent) setIsRefreshingInquiry(true);
+    try {
+      const res = await apiClient.get(API_ENDPOINTS.INQUIRIES.BY_ID(inqKey), {
+        headers: { 'x-user-role': 'admin' }
+      });
+      if (res.data?.data) {
+        const freshInq = res.data.data;
+        const markedMsgs = (freshInq.messages || []).map((m: any) => ({
+          ...m,
+          isSeen: true,
+          readByAdmin: true
+        }));
+        const updated = { ...freshInq, messages: markedMsgs };
+        setSelectedInquiry(updated);
+        setInquiries((prev) =>
+          prev.map((item) =>
+            item._id === updated._id || item.inquiryNumber === updated.inquiryNumber ? updated : item
+          )
+        );
+      }
+    } catch (err) {
+      console.error('Failed to refresh inquiry details:', err);
+    } finally {
+      if (!silent) setIsRefreshingInquiry(false);
+    }
+  };
+
   const openUpdateModal = (inq: CustomerInquiry) => {
-    setSelectedInquiry(inq);
+    const inqKey = inq.inquiryNumber || inq._id;
+    // Mark messages as seen in local state
+    const updatedMsgs = (inq.messages || []).map((m) => ({
+      ...m,
+      isSeen: true,
+      readByAdmin: true
+    }));
+    const updatedInq = { ...inq, messages: updatedMsgs };
+
+    setSelectedInquiry(updatedInq);
+    setInquiries((prev) =>
+      prev.map((item) =>
+        (item._id === inq._id || item.inquiryNumber === inq.inquiryNumber) ? updatedInq : item
+      )
+    );
     setNewStatus(inq.status);
     setQuotedPrice(inq.quotedPrice ? String(inq.quotedPrice) : '');
     setAdminNotes(inq.adminNotes || '');
+    setAdminReplyText('');
     setIsUpdateModalOpen(true);
+
+    // Persist seen state in backend
+    if (inqKey && inq.messages && inq.messages.some(m => (m.sender === 'customer' || !m.sender) && !m.isSeen && !m.readByAdmin)) {
+      apiClient.put(API_ENDPOINTS.INQUIRIES.MARK_MESSAGES_READ(inqKey), {}, {
+        headers: { 'x-user-role': 'admin' }
+      }).catch(() => {});
+    }
+
+    // Immediately fetch latest live messages without needing page refresh!
+    refreshSelectedInquiry(inq, true);
+  };
+
+  const handleSendAdminReply = async () => {
+    if (!selectedInquiry || !adminReplyText.trim()) return;
+    setIsSendingReply(true);
+    try {
+      const inqKey = selectedInquiry.inquiryNumber || selectedInquiry._id;
+      const res = await apiClient.post(
+        API_ENDPOINTS.INQUIRIES.ADD_MESSAGE(inqKey),
+        {
+          message: adminReplyText.trim(),
+          sender: 'admin',
+          senderName: 'Amba Support Admin'
+        },
+        { headers: { 'x-user-role': 'admin' } }
+      );
+
+      const newMsg: InquiryMessage = res.data?.data?.message || {
+        _id: 'msg_' + Date.now(),
+        sender: 'admin',
+        senderName: 'Amba Support Admin',
+        message: adminReplyText.trim(),
+        createdAt: new Date().toISOString()
+      };
+
+      const updatedMessages = [...(selectedInquiry.messages || []), newMsg];
+      setSelectedInquiry({
+        ...selectedInquiry,
+        messages: updatedMessages
+      });
+
+      setInquiries((prev) =>
+        prev.map((i) =>
+          (i.inquiryNumber === selectedInquiry.inquiryNumber || i._id === selectedInquiry._id)
+            ? { ...i, messages: updatedMessages }
+            : i
+        )
+      );
+
+      setAdminReplyText('');
+      setNotification({
+        type: 'success',
+        message: `Reply sent to customer for Inquiry #${selectedInquiry.inquiryNumber}!`
+      });
+      setTimeout(() => setNotification(null), 4000);
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to send reply to customer');
+    } finally {
+      setIsSendingReply(false);
+    }
   };
 
   const handleUpdateStatus = async () => {
@@ -638,6 +767,15 @@ export default function AdminInquiriesPage() {
                                 ● New Today
                               </span>
                             )}
+                            {inq.messages && inq.messages.length > 0 && (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-full mt-1">
+                                <MessageSquare className="w-3 h-3 text-indigo-600" />
+                                {inq.messages.length} msg{inq.messages.length > 1 ? 's' : ''}
+                                {inq.messages[inq.messages.length - 1]?.sender === 'customer' && (
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse ml-0.5" title="New customer message" />
+                                )}
+                              </span>
+                            )}
                           </td>
                           <td className="py-4 px-5 whitespace-nowrap">
                             {getCategoryBadge(inq.category)}
@@ -661,6 +799,14 @@ export default function AdminInquiriesPage() {
                               <div className="min-w-0">
                                 <div className="flex items-center gap-2 flex-wrap">
                                   <p className="font-bold text-slate-900 text-sm leading-snug">{inq.name}</p>
+                                  {getUnseenCount(inq) > 0 && (
+                                    <span
+                                      className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-[11px] font-black bg-red-600 text-white shadow-xs"
+                                      title={`${getUnseenCount(inq)} new message(s)`}
+                                    >
+                                      {getUnseenCount(inq)}
+                                    </span>
+                                  )}
                                 </div>
                                 {inq.description && (
                                   <p className="text-xs text-slate-500 line-clamp-1 max-w-xs mt-0.5">
@@ -750,13 +896,47 @@ export default function AdminInquiriesPage() {
                 </h2>
                 {getCategoryBadge(selectedInquiry.category)}
               </div>
-              <button
-                onClick={() => setIsUpdateModalOpen(false)}
-                className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => refreshSelectedInquiry(selectedInquiry)}
+                  disabled={isRefreshingInquiry}
+                  className="px-2.5 py-1.5 text-slate-600 hover:text-indigo-600 rounded-lg hover:bg-slate-100 border border-slate-200 transition-colors cursor-pointer flex items-center gap-1.5 text-xs font-bold shadow-2xs"
+                  title="Refresh latest messages & details"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${isRefreshingInquiry ? 'animate-spin text-indigo-600' : ''}`} />
+                  <span>Refresh</span>
+                </button>
+                <button
+                  onClick={() => setIsUpdateModalOpen(false)}
+                  className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </div>
+
+            {/* PROMINENT CUSTOMER MESSAGE HIGHLIGHT BANNER */}
+            {((selectedInquiry.messages && selectedInquiry.messages.length > 0) || selectedInquiry.description) && (
+              <div className="p-4 bg-amber-50/90 border-2 border-amber-300 rounded-xl space-y-1.5 shadow-2xs">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 text-amber-900 font-bold text-xs uppercase tracking-wider">
+                    <MessageSquare className="w-4 h-4 text-amber-700" />
+                    <span>Customer Message Received from Frontend:</span>
+                  </div>
+                  {selectedInquiry.messages && selectedInquiry.messages.length > 0 && (
+                    <span className="text-[10px] font-bold bg-amber-200/80 text-amber-900 px-2 py-0.5 rounded">
+                      {new Date(selectedInquiry.messages[selectedInquiry.messages.length - 1].createdAt).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+                    </span>
+                  )}
+                </div>
+                <div className="bg-white p-3 rounded-lg border border-amber-200 text-slate-900 text-sm font-bold leading-relaxed whitespace-pre-wrap">
+                  "{selectedInquiry.messages && selectedInquiry.messages.length > 0
+                    ? selectedInquiry.messages[selectedInquiry.messages.length - 1].message
+                    : selectedInquiry.description}"
+                </div>
+              </div>
+            )}
 
             {/* 2-Column Content Grid */}
             <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-start">
@@ -828,6 +1008,95 @@ export default function AdminInquiriesPage() {
                     </div>
                   </div>
                 )}
+
+                {/* CUSTOMER & ADMIN MESSAGING / CHAT SECTION */}
+                <div className="p-3.5 bg-white rounded-xl border border-slate-200 shadow-2xs space-y-2.5">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
+                      <MessageSquare className="w-4 h-4 text-indigo-600" />
+                      <span>Customer Inquiries & Messages</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => refreshSelectedInquiry(selectedInquiry)}
+                        disabled={isRefreshingInquiry}
+                        className="p-1 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors cursor-pointer"
+                        title="Refresh Messages"
+                      >
+                        <RefreshCw className={`w-3.5 h-3.5 ${isRefreshingInquiry ? 'animate-spin text-indigo-600' : ''}`} />
+                      </button>
+                      <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-200">
+                        {selectedInquiry.messages && selectedInquiry.messages.length > 0
+                          ? `${selectedInquiry.messages.length} message(s)`
+                          : 'No messages yet'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Messages List */}
+                  {selectedInquiry.messages && selectedInquiry.messages.length > 0 ? (
+                    <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                      {selectedInquiry.messages.map((msg, mIdx) => {
+                        const isCustomer = msg.sender === 'customer';
+                        return (
+                          <div
+                            key={msg._id || mIdx}
+                            className={`p-2.5 rounded-xl text-xs space-y-1 ${
+                              isCustomer
+                                ? 'bg-amber-50/70 border border-amber-200/80 text-amber-950'
+                                : 'bg-indigo-50/70 border border-indigo-200/80 text-indigo-950 ml-4'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between text-[10px]">
+                              <span className={`font-bold uppercase tracking-wider ${isCustomer ? 'text-amber-800' : 'text-indigo-800'}`}>
+                                {isCustomer ? `Customer (${selectedInquiry.name || selectedInquiry.email})` : 'Amba Admin (You)'}
+                              </span>
+                              <span className="text-slate-400">
+                                {msg.createdAt ? new Date(msg.createdAt).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : ''}
+                              </span>
+                            </div>
+                            <p className="font-medium whitespace-pre-wrap leading-relaxed">{msg.message}</p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-[11px] text-slate-400 italic py-1">
+                      No customer messages have been sent for this requirement yet.
+                    </p>
+                  )}
+
+                  {/* Reply Input Box */}
+                  <div className="pt-2 border-t border-slate-100 flex items-center gap-2">
+                    <input
+                      type="text"
+                      placeholder="Reply directly to customer..."
+                      value={adminReplyText}
+                      onChange={(e) => setAdminReplyText(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleSendAdminReply();
+                        }
+                      }}
+                      className="flex-1 px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium text-slate-800 placeholder:text-slate-400"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleSendAdminReply}
+                      disabled={isSendingReply || !adminReplyText.trim()}
+                      className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg shadow-2xs transition-all flex items-center gap-1 cursor-pointer disabled:opacity-50 shrink-0"
+                    >
+                      {isSendingReply ? (
+                        <RefreshCw className="w-3 h-3 animate-spin" />
+                      ) : (
+                        <Send className="w-3 h-3" />
+                      )}
+                      <span>Reply</span>
+                    </button>
+                  </div>
+                </div>
               </div>
 
               {/* RIGHT COLUMN: Action Controls (Status, Price, Remarks) */}
