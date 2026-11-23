@@ -30,7 +30,8 @@ import {
   Armchair,
   Wand2,
   MessageSquare,
-  Send
+  Send,
+  ShoppingBag
 } from 'lucide-react';
 
 export interface InquiryMessage {
@@ -59,6 +60,8 @@ interface CustomerInquiry {
   status: 'pending' | 'in_review' | 'quoted' | 'approved' | 'rejected';
   quotedPrice?: number;
   adminNotes?: string;
+  inquiryType?: 'custom_requirement' | 'artisan_product' | string;
+  isDirectProductInquiry?: boolean;
   messages?: InquiryMessage[];
   timeline?: Array<{
     status: string;
@@ -73,6 +76,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState<boolean>(true);
   const [dashboardTimeframe, setDashboardTimeframe] = useState<'all' | 'today' | 'week' | 'month'>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [inquiryTypeFilter, setInquiryTypeFilter] = useState<'all' | 'custom_requirement' | 'artisan_product'>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [actionSuccessMessage, setActionSuccessMessage] = useState<string | null>(null);
 
@@ -132,8 +136,18 @@ export default function AdminDashboard() {
     return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
   };
 
+  // Helper to distinguish Artisan Product Inquiry vs Custom Requirement Studio
+  const isArtisanProductInquiry = (inq: CustomerInquiry): boolean => {
+    if (inq.inquiryType === 'artisan_product' || inq.isDirectProductInquiry) return true;
+    if (inq.size && (inq.size.includes('Catalog Price') || inq.size.includes('Catalog Product'))) return true;
+    if (inq.description && inq.description.includes('I am interested in') && inq.description.includes('(Price:')) return true;
+    return false;
+  };
+
   // Dynamic calculations across all inquiries
   const totalCount = inquiries.length;
+  const artisanProductCount = inquiries.filter(isArtisanProductInquiry).length;
+  const customRequirementCount = inquiries.filter((i) => !isArtisanProductInquiry(i)).length;
   const todayCount = inquiries.filter((i) => isToday(i.createdAt)).length;
   const thisWeekCount = inquiries.filter((i) => isThisWeek(i.createdAt)).length;
   const thisMonthCount = inquiries.filter((i) => isThisMonth(i.createdAt)).length;
@@ -163,6 +177,12 @@ export default function AdminDashboard() {
       item.category === categoryFilter ||
       (!item.category && categoryFilter === 'other');
 
+    const isArtisan = isArtisanProductInquiry(item);
+    const matchesInquiryType =
+      inquiryTypeFilter === 'all' ||
+      (inquiryTypeFilter === 'artisan_product' && isArtisan) ||
+      (inquiryTypeFilter === 'custom_requirement' && !isArtisan);
+
     const q = searchQuery.toLowerCase().trim();
     const matchesSearch =
       !q ||
@@ -171,7 +191,7 @@ export default function AdminDashboard() {
       item.email.toLowerCase().includes(q) ||
       item.size.toLowerCase().includes(q);
 
-    return matchesTimeframe && matchesCategory && matchesSearch;
+    return matchesTimeframe && matchesCategory && matchesSearch && matchesInquiryType;
   });
 
   const getUnseenCount = (inq: CustomerInquiry) => {
@@ -618,6 +638,69 @@ export default function AdminDashboard() {
 
           {/* DYNAMIC INCOMING REQUIREMENTS TABLE WITH TABS */}
           <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+            {/* 0. PRIMARY WORKFLOW TABS: ALL vs CUSTOM REQUIREMENT vs ARTISAN PRODUCT */}
+            <div className="bg-slate-50 border-b border-slate-200 px-4 pt-3 flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2 overflow-x-auto overflow-y-hidden">
+                <button
+                  type="button"
+                  onClick={() => setInquiryTypeFilter('all')}
+                  className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-t-xl border-t border-x transition-all cursor-pointer whitespace-nowrap ${inquiryTypeFilter === 'all'
+                    ? 'bg-white text-indigo-700 border-slate-200 border-b-2 border-b-white shadow-2xs font-extrabold'
+                    : 'bg-transparent text-slate-600 hover:text-slate-900 border-transparent hover:bg-slate-200/50'
+                    }`}
+                >
+                  <ClipboardList className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>All Inquiries</span>
+                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${inquiryTypeFilter === 'all' ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-200 text-slate-600'
+                    }`}>
+                    {totalCount}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setInquiryTypeFilter('custom_requirement')}
+                  className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-t-xl border-t border-x transition-all cursor-pointer whitespace-nowrap ${inquiryTypeFilter === 'custom_requirement'
+                    ? 'bg-white text-amber-900 border-slate-200 border-b-2 border-b-white shadow-2xs font-extrabold'
+                    : 'bg-transparent text-slate-600 hover:text-slate-900 border-transparent hover:bg-slate-200/50'
+                    }`}
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                  <span>Custom Requirements</span>
+                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${inquiryTypeFilter === 'custom_requirement' ? 'bg-amber-100 text-amber-800' : 'bg-slate-200 text-slate-600'
+                    }`}>
+                    {customRequirementCount}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setInquiryTypeFilter('artisan_product')}
+                  className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-t-xl border-t border-x transition-all cursor-pointer whitespace-nowrap ${inquiryTypeFilter === 'artisan_product'
+                    ? 'bg-white text-emerald-900 border-slate-200 border-b-2 border-b-white shadow-2xs font-extrabold'
+                    : 'bg-transparent text-slate-600 hover:text-slate-900 border-transparent hover:bg-slate-200/50'
+                    }`}
+                >
+                  <ShoppingBag className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Artisan Products</span>
+                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${inquiryTypeFilter === 'artisan_product' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'
+                    }`}>
+                    {artisanProductCount}
+                  </span>
+                </button>
+              </div>
+
+              {inquiryTypeFilter !== 'all' && (
+                <button
+                  type="button"
+                  onClick={() => setInquiryTypeFilter('all')}
+                  className="text-xs text-indigo-600 hover:text-indigo-800 font-bold shrink-0 pb-1 cursor-pointer"
+                >
+                  ← Show All Types ({totalCount})
+                </button>
+              )}
+            </div>
+
             {/* 1. CATEGORY TABS (CATEGORY WISE BREAKDOWN - MODERN SLEEK ICONS) */}
             <div className="bg-slate-100/80 border-b border-slate-200 px-4 pt-2.5 flex items-center justify-between gap-3 overflow-x-auto overflow-y-hidden">
               <div className="flex items-center gap-2 overflow-x-auto overflow-y-hidden">
@@ -807,6 +890,17 @@ export default function AdminDashboard() {
                                 )}
                               </span>
                             )}
+                            <div className="mt-1">
+                              {isArtisanProductInquiry(inq) ? (
+                                <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
+                                  <ShoppingBag className="w-2.5 h-2.5 text-emerald-600" /> Artisan Product
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md">
+                                  <Sparkles className="w-2.5 h-2.5 text-amber-600" /> Custom Studio
+                                </span>
+                              )}
+                            </div>
                           </td>
                           <td className="py-4 px-5 whitespace-nowrap">
                             {getCategoryBadge(inq.category)}
@@ -913,9 +1007,18 @@ export default function AdminDashboard() {
                   #{selectedInquiry.inquiryNumber}
                 </span>
                 <h3 className="text-base font-extrabold text-slate-900">
-                  Review Customer Requirement
+                  {isArtisanProductInquiry(selectedInquiry) ? 'Review Artisan Product Inquiry' : 'Review Custom Requirement'}
                 </h3>
                 {getCategoryBadge(selectedInquiry.category)}
+                {isArtisanProductInquiry(selectedInquiry) ? (
+                  <span className="inline-flex items-center gap-1 text-[11px] font-extrabold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-lg shadow-2xs">
+                    <ShoppingBag className="w-3.5 h-3.5 text-emerald-600" /> Artisan Catalog Product
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 text-[11px] font-extrabold text-amber-800 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded-lg shadow-2xs">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-600" /> Custom Requirement Studio
+                  </span>
+                )}
               </div>
               <div className="flex items-center gap-2">
                 <button
