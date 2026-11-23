@@ -33,7 +33,9 @@ export const API_ENDPOINTS = {
     BY_VENDOR: (vendorId: string) => `${API_BASE_URL}/products?vendor=${vendorId}`,
     APPROVE: (id: string) => `${API_BASE_URL}/products/${id}/approve`,
     REJECT: (id: string) => `${API_BASE_URL}/products/${id}/reject`,
+    UPDATE: (id: string) => `${API_BASE_URL}/products/${id}`,
     DELETE: (id: string) => `${API_BASE_URL}/products/${id}`,
+    CLEAR_ALL: `${API_BASE_URL}/products/clear-all`,
   },
 
   // Categories & Subcategories

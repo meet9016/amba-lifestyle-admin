@@ -57,6 +57,11 @@ export const AdminSidebar = () => {
       icon: ClipboardList,
       badge: pendingInquiriesCount > 0 ? `${pendingInquiriesCount} new` : null
     },
+    {
+      name: 'Products',
+      href: '/products',
+      icon: ShoppingBag
+    },
   ];
 
   return (

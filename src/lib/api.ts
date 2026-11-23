@@ -8,6 +8,7 @@ export const apiClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
+    'x-user-role': 'admin'
   },
   timeout: 15000,
 });
@@ -15,8 +16,11 @@ export const apiClient = axios.create({
 // Automatically inject JWT token from localStorage on client-side requests
 apiClient.interceptors.request.use(
   (config) => {
+    config.headers = config.headers || {};
+    config.headers['x-user-role'] = 'admin';
     if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('token');
+      const adminToken = localStorage.getItem('admin_token');
+      const token = adminToken || localStorage.getItem('token');
       if (token && !config.headers.Authorization) {
         config.headers.Authorization = `Bearer ${token}`;
       }

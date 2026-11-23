@@ -27,7 +27,10 @@ import {
   DollarSign,
   AlertCircle,
   Star,
-  Info
+  Info,
+  Plus,
+  Upload,
+  Edit3
 } from 'lucide-react';
 
 interface AdminProduct {
@@ -37,10 +40,12 @@ interface AdminProduct {
   subCategory?: string;
   price: number;
   discountPrice?: number;
-  stock: number;
+  stock?: number;
   vendorName: string;
   vendor?: string;
-  approvalStatus: 'approved' | 'pending' | 'rejected';
+  status?: string;
+  approvalStatus: 'approved' | 'pending' | 'rejected' | 'inactive';
+  isActive?: boolean;
   rejectionReason?: string;
   imageUrl?: string;
   images?: string[];
@@ -55,7 +60,7 @@ interface AdminProduct {
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<AdminProduct[]>([]);
   const [categories, setCategories] = useState<{ _id: string; name: string }[]>([]);
-  const [activeTab, setActiveTab] = useState<'all' | 'approved' | 'pending' | 'rejected'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'active' | 'inactive'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [notification, setNotification] = useState<string | null>(null);
@@ -69,6 +74,288 @@ export default function AdminProductsPage() {
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
   const [rejectionReasonInput, setRejectionReasonInput] = useState('');
   const [productToReject, setProductToReject] = useState<AdminProduct | null>(null);
+
+  // Common Delete Confirmation Modal States
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [productToDelete, setProductToDelete] = useState<AdminProduct | null>(null);
+  const [isDeletingProduct, setIsDeletingProduct] = useState(false);
+
+  // Add Product Modal States
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [newTitle, setNewTitle] = useState('');
+  const [newPrice, setNewPrice] = useState('');
+  const [newCategory, setNewCategory] = useState('Fashion & Apparel');
+  const [newImageUrl, setNewImageUrl] = useState('');
+  const [isSubmittingNewProduct, setIsSubmittingNewProduct] = useState(false);
+
+  // Edit Product Modal States
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingProductId, setEditingProductId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editPrice, setEditPrice] = useState('');
+  const [editCategory, setEditCategory] = useState('Fashion & Apparel');
+  const [editImageUrl, setEditImageUrl] = useState('');
+  const [isSubmittingEdit, setIsSubmittingEdit] = useState(false);
+
+  // Client-side auto-compression helper to ensure instant upload without "request entity too large" error
+  const compressImageFile = (file: File): Promise<string> => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onerror = () => resolve('');
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onerror = () => resolve((event.target?.result as string) || '');
+        img.onload = () => {
+          const MAX_DIM = 1200;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > MAX_DIM || height > MAX_DIM) {
+            if (width > height) {
+              height = Math.round((height * MAX_DIM) / width);
+              width = MAX_DIM;
+            } else {
+              width = Math.round((width * MAX_DIM) / height);
+              height = MAX_DIM;
+            }
+          }
+
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            resolve((event.target?.result as string) || '');
+            return;
+          }
+          ctx.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL('image/jpeg', 0.85));
+        };
+        img.src = (event.target?.result as string) || '';
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleImageFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const compressed = await compressImageFile(file);
+      if (compressed) {
+        setNewImageUrl(compressed);
+      }
+    } catch (_) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === 'string') {
+          setNewImageUrl(reader.result);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleEditImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const compressed = await compressImageFile(file);
+      if (compressed) {
+        setEditImageUrl(compressed);
+      }
+    } catch (_) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === 'string') {
+          setEditImageUrl(reader.result);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleCreateProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTitle.trim()) {
+      alert('Please enter product name');
+      return;
+    }
+    if (!newPrice || Number(newPrice) <= 0) {
+      alert('Please enter a valid price');
+      return;
+    }
+    const finalImg = newImageUrl.trim() || 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=600&q=80';
+
+    setIsSubmittingNewProduct(true);
+    try {
+      const payload = {
+        title: newTitle.trim(),
+        name: newTitle.trim(),
+        price: Number(newPrice),
+        category: newCategory,
+        images: [finalImg],
+        imageUrl: finalImg
+      };
+
+      const res = await apiClient.post(API_ENDPOINTS.PRODUCTS.CREATE, payload, {
+        headers: { 'x-user-role': 'admin' }
+      });
+
+      const created = res.data?.data;
+      if (created) {
+        const mappedProduct: AdminProduct = {
+          id: String(created._id),
+          title: created.title,
+          category: created.category,
+          subCategory: created.subCategory || 'Handcrafted Goods',
+          price: created.price,
+          discountPrice: created.discountPrice,
+          stock: created.stock || 10,
+          vendorName: created.vendorName || 'Amba Lifestyle Direct',
+          approvalStatus: 'approved',
+          status: 'approved',
+          isActive: true,
+          imageUrl: created.images?.[0] || finalImg,
+          images: created.images || [finalImg],
+          description: '',
+          createdAt: created.createdAt || new Date().toISOString()
+        };
+        setProducts(prev => [mappedProduct, ...prev]);
+        setNotification(`Product "${newTitle}" added successfully! Now visible on the frontend.`);
+        setTimeout(() => setNotification(null), 5000);
+      }
+      setIsAddModalOpen(false);
+      setNewTitle('');
+      setNewPrice('');
+      setNewImageUrl('');
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to create product');
+    } finally {
+      setIsSubmittingNewProduct(false);
+    }
+  };
+
+  const handleToggleProductStatus = async (p: AdminProduct) => {
+    const isCurrentlyActive = p.approvalStatus === 'approved' && p.status !== 'inactive';
+    const nextActive = !isCurrentlyActive;
+    const nextStatus = nextActive ? 'approved' : 'inactive';
+
+    // Optimistically update status
+    setProducts(prev =>
+      prev.map(item =>
+        item.id === p.id
+          ? { ...item, approvalStatus: nextStatus as any, status: nextStatus, isActive: nextActive }
+          : item
+      )
+    );
+
+    try {
+      await apiClient.put(
+        API_ENDPOINTS.PRODUCTS.UPDATE(p.id),
+        {
+          isActive: nextActive,
+          status: nextStatus,
+          approvalStatus: nextStatus
+        },
+        { headers: { 'x-user-role': 'admin' } }
+      );
+
+      setNotification(
+        `Product "${p.title}" is now ${nextActive ? 'Active (Live on Storefront)' : 'Inactive (Hidden from Storefront)'}.`
+      );
+      setTimeout(() => setNotification(null), 4000);
+    } catch (err: any) {
+      // Revert if error
+      setProducts(prev =>
+        prev.map(item =>
+          item.id === p.id
+            ? { ...item, approvalStatus: p.approvalStatus, status: p.status, isActive: p.isActive }
+            : item
+        )
+      );
+      alert(err.response?.data?.message || 'Failed to update product status');
+    }
+  };
+
+  const handleOpenEdit = (p: AdminProduct) => {
+    setEditingProductId(p.id);
+    setEditTitle(p.title);
+    setEditPrice(String(p.price));
+    setEditCategory(p.category || 'Fashion & Apparel');
+    setEditImageUrl(p.imageUrl || p.images?.[0] || '');
+    setIsEditModalOpen(true);
+  };
+
+  const handleUpdateProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingProductId) return;
+    if (!editTitle.trim()) {
+      alert('Product name is required');
+      return;
+    }
+    if (!editPrice || Number(editPrice) <= 0) {
+      alert('Valid price is required');
+      return;
+    }
+
+    setIsSubmittingEdit(true);
+    try {
+      const finalImg = editImageUrl.trim() || 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=600&q=80';
+      const payload = {
+        title: editTitle.trim(),
+        name: editTitle.trim(),
+        price: Number(editPrice),
+        category: editCategory,
+        images: [finalImg],
+        imageUrl: finalImg
+      };
+
+      await apiClient.put(API_ENDPOINTS.PRODUCTS.UPDATE(editingProductId), payload, {
+        headers: { 'x-user-role': 'admin' }
+      });
+
+      setProducts(prev =>
+        prev.map(item =>
+          item.id === editingProductId
+            ? { ...item, title: editTitle.trim(), price: Number(editPrice), category: editCategory, imageUrl: finalImg, images: [finalImg] }
+            : item
+        )
+      );
+
+      setNotification(`Product "${editTitle}" updated successfully.`);
+      setTimeout(() => setNotification(null), 4000);
+      setIsEditModalOpen(false);
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to update product');
+    } finally {
+      setIsSubmittingEdit(false);
+    }
+  };
+
+  const handleOpenDeleteModal = (p: AdminProduct) => {
+    setProductToDelete(p);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleConfirmDeleteProduct = async () => {
+    if (!productToDelete) return;
+    setIsDeletingProduct(true);
+    try {
+      await apiClient.delete(API_ENDPOINTS.PRODUCTS.DELETE(productToDelete.id), {
+        headers: { 'x-user-role': 'admin' }
+      });
+      setProducts(prev => prev.filter(item => item.id !== productToDelete.id));
+      setNotification(`Product "${productToDelete.title}" deleted successfully.`);
+      setTimeout(() => setNotification(null), 4000);
+      setIsDeleteModalOpen(false);
+      setProductToDelete(null);
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to delete product');
+    } finally {
+      setIsDeletingProduct(false);
+    }
+  };
 
   // Fetch all products and dynamic categories from backend
   useEffect(() => {
@@ -89,7 +376,9 @@ export default function AdminProductsPage() {
             stock: item.stock,
             vendorName: item.vendorName || 'Artisan Partner',
             vendor: typeof item.vendor === 'object' ? item.vendor?._id || item.vendor?.name : String(item.vendor || ''),
-            approvalStatus: item.approvalStatus || (item.status === 'pending_approval' ? 'pending' : 'approved'),
+            status: item.status || 'approved',
+            approvalStatus: (item.approvalStatus === 'inactive' || item.status === 'inactive') ? 'inactive' : (item.approvalStatus || (item.status === 'pending_approval' ? 'pending' : 'approved')),
+            isActive: item.approvalStatus === 'approved' && item.status !== 'inactive',
             rejectionReason: item.rejectionReason || '',
             imageUrl: item.images?.[0] || 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=300&q=80',
             images: Array.isArray(item.images) && item.images.length > 0
@@ -174,8 +463,13 @@ export default function AdminProductsPage() {
 
   // Filter products
   const filteredProducts = products.filter((p) => {
+    const isProdActive = p.approvalStatus === 'approved' && p.status !== 'inactive';
     const matchesTab =
-      activeTab === 'all' ? true : p.approvalStatus === activeTab;
+      activeTab === 'all'
+        ? true
+        : activeTab === 'active'
+          ? isProdActive
+          : !isProdActive;
     const matchesSearch =
       p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.vendorName.toLowerCase().includes(searchQuery.toLowerCase());
@@ -185,9 +479,8 @@ export default function AdminProductsPage() {
     return matchesTab && matchesSearch && matchesCategory;
   });
 
-  const countApproved = products.filter(p => p.approvalStatus === 'approved').length;
-  const countPending = products.filter(p => p.approvalStatus === 'pending').length;
-  const countRejected = products.filter(p => p.approvalStatus === 'rejected').length;
+  const countActive = products.filter(p => p.approvalStatus === 'approved' && p.status !== 'inactive').length;
+  const countInactive = products.filter(p => p.approvalStatus !== 'approved' || p.status === 'inactive').length;
 
   return (
     <div className="flex min-h-screen bg-zinc-50 text-zinc-900">
@@ -212,17 +505,26 @@ export default function AdminProductsPage() {
             <div>
               <h1 className="text-2xl font-bold text-zinc-900">All Products Directory</h1>
               <p className="text-xs text-zinc-500 mt-1">
-                Complete catalog across all vendors. Review submissions, inspect full specifications, and manage storefront publication.
+                Complete catalog across all vendors. Set products Active or Inactive, edit details, and inspect storefront publication.
               </p>
             </div>
-            <a
-              href="http://localhost:3000"
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-zinc-200 rounded-xl text-xs font-semibold text-zinc-700 hover:bg-zinc-100 transition-colors shadow-xs"
-            >
-              <ExternalLink className="w-3.5 h-3.5" /> View Live Storefront
-            </a>
+            <div className="flex items-center gap-2.5">
+              <Button
+                onClick={() => setIsAddModalOpen(true)}
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-sm transition-all cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add New Product</span>
+              </Button>
+              <a
+                href="http://localhost:3000"
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 px-3 py-2 bg-white border border-zinc-200 rounded-xl text-xs font-semibold text-zinc-700 hover:bg-zinc-100 transition-colors shadow-xs"
+              >
+                <ExternalLink className="w-3.5 h-3.5" /> View Storefront
+              </a>
+            </div>
           </div>
 
           {/* Filter Bar */}
@@ -232,41 +534,31 @@ export default function AdminProductsPage() {
               <button
                 onClick={() => setActiveTab('all')}
                 className={`pb-3 px-3 text-xs font-bold border-b-2 transition-all ${activeTab === 'all'
-                    ? 'border-indigo-600 text-indigo-700'
-                    : 'border-transparent text-zinc-500 hover:text-zinc-800'
+                  ? 'border-indigo-600 text-indigo-700'
+                  : 'border-transparent text-zinc-500 hover:text-zinc-800'
                   }`}
               >
                 All Products ({products.length})
               </button>
               <button
-                onClick={() => setActiveTab('approved')}
-                className={`pb-3 px-3 text-xs font-bold border-b-2 transition-all flex items-center gap-1.5 ${activeTab === 'approved'
-                    ? 'border-emerald-600 text-emerald-700'
-                    : 'border-transparent text-zinc-500 hover:text-zinc-800'
+                onClick={() => setActiveTab('active')}
+                className={`pb-3 px-3 text-xs font-bold border-b-2 transition-all flex items-center gap-1.5 ${activeTab === 'active'
+                  ? 'border-emerald-600 text-emerald-700'
+                  : 'border-transparent text-zinc-500 hover:text-zinc-800'
                   }`}
               >
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                Live / Approved ({countApproved})
+                Active ({countActive})
               </button>
               <button
-                onClick={() => setActiveTab('pending')}
-                className={`pb-3 px-3 text-xs font-bold border-b-2 transition-all flex items-center gap-1.5 ${activeTab === 'pending'
-                    ? 'border-amber-600 text-amber-700'
-                    : 'border-transparent text-zinc-500 hover:text-zinc-800'
+                onClick={() => setActiveTab('inactive')}
+                className={`pb-3 px-3 text-xs font-bold border-b-2 transition-all flex items-center gap-1.5 ${activeTab === 'inactive'
+                  ? 'border-zinc-700 text-zinc-900'
+                  : 'border-transparent text-zinc-500 hover:text-zinc-800'
                   }`}
               >
-                <Clock className="w-3.5 h-3.5 text-amber-600" />
-                Pending Review ({countPending})
-              </button>
-              <button
-                onClick={() => setActiveTab('rejected')}
-                className={`pb-3 px-3 text-xs font-bold border-b-2 transition-all flex items-center gap-1.5 ${activeTab === 'rejected'
-                    ? 'border-rose-600 text-rose-700'
-                    : 'border-transparent text-zinc-500 hover:text-zinc-800'
-                  }`}
-              >
-                <XCircle className="w-3.5 h-3.5 text-rose-600" />
-                Rejected ({countRejected})
+                <XCircle className="w-3.5 h-3.5 text-zinc-400" />
+                Inactive ({countInactive})
               </button>
             </div>
 
@@ -307,15 +599,14 @@ export default function AdminProductsPage() {
                     <th className="pb-3">Vendor</th>
                     <th className="pb-3">Category</th>
                     <th className="pb-3">Price</th>
-                    <th className="pb-3">Stock</th>
-                    <th className="pb-3">Storefront Status</th>
+                    <th className="pb-3">Status</th>
                     <th className="pb-3 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-100">
                   {filteredProducts.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="py-10 text-center text-xs text-zinc-400">
+                      <td colSpan={6} className="py-10 text-center text-xs text-zinc-400">
                         No products found matching criteria.
                       </td>
                     </tr>
@@ -349,68 +640,58 @@ export default function AdminProductsPage() {
                           )}
                         </td>
                         <td className="py-3 font-semibold text-zinc-900">₹{p.price.toLocaleString()}</td>
-                        <td className="py-3 text-xs text-zinc-600">{p.stock} pcs</td>
                         <td className="py-3">
-                          {p.approvalStatus === 'approved' && (
-                            <Badge variant="success" dot size="sm">
-                              Live on Storefront
-                            </Badge>
-                          )}
-                          {p.approvalStatus === 'pending' && (
-                            <Badge variant="warning" dot size="sm">
-                              Pending Review
-                            </Badge>
-                          )}
-                          {p.approvalStatus === 'rejected' && (
-                            <Badge variant="danger" dot size="sm">
-                              Rejected
-                            </Badge>
+                          {p.approvalStatus === 'approved' && p.status !== 'inactive' ? (
+                            <button
+                              onClick={() => handleToggleProductStatus(p)}
+                              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 hover:border-emerald-300 transition-all cursor-pointer shadow-2xs group"
+                              title="Active on Storefront. Click to set Inactive"
+                            >
+                              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                              <span>Active</span>
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleToggleProductStatus(p)}
+                              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-zinc-100 text-zinc-600 border border-zinc-200 hover:bg-zinc-200/80 hover:border-zinc-300 transition-all cursor-pointer shadow-2xs group"
+                              title="Inactive / Hidden. Click to set Active"
+                            >
+                              <span className="w-2 h-2 rounded-full bg-zinc-400" />
+                              <span>Inactive</span>
+                            </button>
                           )}
                         </td>
                         <td className="py-3 text-right">
-                          <div className="inline-flex items-center gap-2">
-                            {/* Inspect / View Details Button */}
+                          <div className="inline-flex items-center gap-1.5 justify-end">
+                            {/* 1. Edit Button */}
                             <button
-                              onClick={() => handleOpenDetails(p)}
-                              className="inline-flex items-center gap-1.5 h-8.5 px-3 text-xs border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50 hover:border-zinc-300 hover:text-zinc-900 rounded-xl font-semibold transition-all shadow-2xs active:scale-[0.98]"
-                              title="Inspect Full Specifications & Story"
+                              onClick={() => handleOpenEdit(p)}
+                              className="inline-flex items-center gap-1.5 h-8 px-3 text-xs border border-indigo-200 bg-indigo-50/60 text-indigo-700 hover:bg-indigo-100 rounded-xl font-bold transition-all shadow-2xs active:scale-[0.98] cursor-pointer"
+                              title="Edit Product (Image, Name, Price)"
                             >
-                              <Eye className="w-3.5 h-3.5 text-zinc-500" />
-                              <span>Details</span>
+                              <Edit3 className="w-3.5 h-3.5" />
+                              <span>Edit</span>
                             </button>
 
-                            {p.approvalStatus === 'pending' && (
-                              <>
-                                <button
-                                  onClick={() => handleOpenRejectModal(p)}
-                                  className="h-8.5 px-3 text-xs border border-rose-200 bg-white text-rose-700 hover:bg-rose-50 hover:border-rose-300 rounded-xl font-semibold transition-all shadow-2xs active:scale-[0.98]"
-                                >
-                                  Reject
-                                </button>
-                                <button
-                                  onClick={() => handleApprove(p)}
-                                  className="h-8.5 px-3.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold transition-all shadow-xs hover:shadow-emerald-600/25 active:scale-[0.98]"
-                                >
-                                  Approve
-                                </button>
-                              </>
-                            )}
-                            {p.approvalStatus === 'approved' && (
-                              <button
-                                onClick={() => handleOpenRejectModal(p)}
-                                className="h-8.5 px-3 text-xs border border-zinc-200 bg-white text-zinc-600 hover:text-rose-600 hover:bg-rose-50 hover:border-rose-200 rounded-xl font-semibold transition-all shadow-2xs active:scale-[0.98]"
-                              >
-                                Revoke
-                              </button>
-                            )}
-                            {p.approvalStatus === 'rejected' && (
-                              <button
-                                onClick={() => handleApprove(p)}
-                                className="h-8.5 px-3 text-xs border border-emerald-200 bg-white text-emerald-700 hover:bg-emerald-50 hover:border-emerald-300 rounded-xl font-semibold transition-all shadow-2xs active:scale-[0.98]"
-                              >
-                                Re-approve
-                              </button>
-                            )}
+                            {/* 2. View Button */}
+                            <button
+                              onClick={() => handleOpenDetails(p)}
+                              className="inline-flex items-center gap-1.5 h-8 px-3 text-xs border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50 hover:border-zinc-300 rounded-xl font-bold transition-all shadow-2xs active:scale-[0.98] cursor-pointer"
+                              title="View Product Details"
+                            >
+                              <Eye className="w-3.5 h-3.5 text-zinc-500" />
+                              <span>View</span>
+                            </button>
+
+                            {/* 3. Delete Button */}
+                            <button
+                              onClick={() => handleOpenDeleteModal(p)}
+                              className="inline-flex items-center gap-1.5 h-8 px-3 text-xs border border-rose-200 bg-rose-50/60 text-rose-700 hover:bg-rose-100 rounded-xl font-bold transition-all shadow-2xs active:scale-[0.98] cursor-pointer"
+                              title="Delete Product"
+                            >
+                              <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                              <span>Delete</span>
+                            </button>
                           </div>
                         </td>
                       </tr>
@@ -533,8 +814,8 @@ export default function AdminProductsPage() {
                         key={idx}
                         onClick={() => setActiveImageIndex(idx)}
                         className={`w-14 h-14 rounded-xl overflow-hidden border-2 shrink-0 transition-all ${activeImageIndex === idx
-                            ? 'border-indigo-600 ring-2 ring-indigo-500/20'
-                            : 'border-zinc-200 opacity-60 hover:opacity-100'
+                          ? 'border-indigo-600 ring-2 ring-indigo-500/20'
+                          : 'border-zinc-200 opacity-60 hover:opacity-100'
                           }`}
                       >
                         <img src={img} alt={`Thumb ${idx}`} className="w-full h-full object-cover" />
@@ -625,16 +906,7 @@ export default function AdminProductsPage() {
               </div>
             </div>
 
-            {/* Description Section */}
-            <div className="space-y-1.5 pt-2 border-t border-zinc-100">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-500 flex items-center gap-1.5">
-                <Info className="w-3.5 h-3.5 text-zinc-400" />
-                Artisan Story & Craft Description
-              </h3>
-              <div className="p-4 bg-zinc-50 rounded-2xl border border-zinc-200/80 text-xs text-zinc-700 leading-relaxed whitespace-pre-wrap">
-                {selectedProduct.description}
-              </div>
-            </div>
+
 
             {/* Specifications if present */}
             {selectedProduct.specifications && Object.keys(selectedProduct.specifications).length > 0 && (
@@ -739,6 +1011,367 @@ export default function AdminProductsPage() {
             />
           </div>
         </div>
+      </Modal>
+
+      {/* ======================================================== */}
+      {/* ADD NEW PRODUCT MODAL (IMAGE, NAME, PRICE)               */}
+      {/* ======================================================== */}
+      <Modal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        title="Add New Product"
+        maxWidth="max-w-lg"
+        footer={
+          <>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsAddModalOpen(false)}
+              disabled={isSubmittingNewProduct}
+            >
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleCreateProduct}
+              disabled={isSubmittingNewProduct || !newTitle.trim() || !newPrice}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold cursor-pointer"
+            >
+              {isSubmittingNewProduct ? 'Adding Product...' : 'Add Product'}
+            </Button>
+          </>
+        }
+      >
+        <form onSubmit={handleCreateProduct} className="space-y-4">
+          {/* Image Upload Area */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-zinc-800 uppercase tracking-wider">
+                Product Image <span className="text-rose-500">*</span>
+              </label>
+              {newImageUrl && (
+                <button
+                  type="button"
+                  onClick={() => setNewImageUrl('')}
+                  className="text-[11px] text-rose-600 hover:text-rose-800 font-semibold cursor-pointer"
+                >
+                  Remove Image
+                </button>
+              )}
+            </div>
+
+            {!newImageUrl ? (
+              <label className="border-2 border-dashed border-zinc-300 hover:border-indigo-500 rounded-2xl p-6 text-center cursor-pointer transition-all bg-zinc-50/70 hover:bg-indigo-50/20 flex flex-col items-center justify-center gap-2 group">
+                <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center group-hover:scale-105 transition-transform border border-indigo-100/60 shadow-2xs">
+                  <Upload className="w-5 h-5 text-indigo-600" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-zinc-800 group-hover:text-indigo-600 transition-colors">
+                    Click to browse and upload product photo
+                  </p>
+                  <p className="text-[11px] text-zinc-400 mt-0.5">
+                    Supports high-resolution PNG, JPG, or WEBP
+                  </p>
+                </div>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageFileUpload}
+                  className="hidden"
+                />
+              </label>
+            ) : (
+              <div className="relative rounded-2xl overflow-hidden border border-zinc-200 bg-zinc-100 flex items-center justify-center group h-48 shadow-xs">
+                <img src={newImageUrl} alt="Product Preview" className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                  <label className="px-3 py-1.5 bg-white text-zinc-800 rounded-xl text-xs font-bold shadow-md cursor-pointer hover:bg-zinc-100 transition-colors flex items-center gap-1.5">
+                    <Upload className="w-3.5 h-3.5 text-indigo-600" />
+                    <span>Change Image</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageFileUpload}
+                      className="hidden"
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setNewImageUrl('')}
+                    className="px-3 py-1.5 bg-rose-600 text-white rounded-xl text-xs font-bold shadow-md hover:bg-rose-700 transition-colors cursor-pointer"
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Name */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-zinc-800 uppercase tracking-wider">
+              Product Name <span className="text-rose-500">*</span>
+            </label>
+            <input
+              type="text"
+              required
+              placeholder="e.g. Pure Banarasi Silk Saree, Handcrafted Silver Necklace"
+              value={newTitle}
+              onChange={(e) => setNewTitle(e.target.value)}
+              className="w-full px-3 py-2.5 text-xs bg-zinc-50 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
+            />
+          </div>
+
+          {/* Price */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-zinc-800 uppercase tracking-wider">
+              Product Price (₹ INR) <span className="text-rose-500">*</span>
+            </label>
+            <div className="relative">
+              <DollarSign className="w-4 h-4 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="number"
+                required
+                min="1"
+                placeholder="e.g. 4500"
+                value={newPrice}
+                onChange={(e) => setNewPrice(e.target.value)}
+                className="w-full pl-9 pr-3 py-2.5 text-xs bg-zinc-50 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-zinc-900"
+              />
+            </div>
+          </div>
+
+          {/* Category */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-zinc-800 uppercase tracking-wider">
+              Category
+            </label>
+            <select
+              value={newCategory}
+              onChange={(e) => setNewCategory(e.target.value)}
+              className="w-full px-3 py-2 text-xs bg-zinc-50 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium cursor-pointer"
+            >
+              <option value="Fashion & Apparel">Fashion & Apparel</option>
+              <option value="Jewelry & Silverware">Jewelry & Silverware</option>
+              <option value="Home Decor & Crafts">Home Decor & Crafts</option>
+              <option value="Other Custom Craft">Other Custom Craft</option>
+            </select>
+          </div>
+        </form>
+      </Modal>
+
+      {/* ======================================================== */}
+      {/* EDIT PRODUCT MODAL (IMAGE, NAME, PRICE)                 */}
+      {/* ======================================================== */}
+      <Modal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        title="Edit Product (Image, Name, Price)"
+        maxWidth="max-w-lg"
+        footer={
+          <>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsEditModalOpen(false)}
+              disabled={isSubmittingEdit}
+            >
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleUpdateProduct}
+              disabled={isSubmittingEdit || !editTitle.trim() || !editPrice}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold cursor-pointer"
+            >
+              {isSubmittingEdit ? 'Saving Changes...' : 'Save & Update Product'}
+            </Button>
+          </>
+        }
+      >
+        <form onSubmit={handleUpdateProduct} className="space-y-4">
+          {/* Image Upload Area */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-zinc-800 uppercase tracking-wider">
+                Product Image <span className="text-rose-500">*</span>
+              </label>
+              {editImageUrl && (
+                <button
+                  type="button"
+                  onClick={() => setEditImageUrl('')}
+                  className="text-[11px] text-rose-600 hover:text-rose-800 font-semibold cursor-pointer"
+                >
+                  Remove Image
+                </button>
+              )}
+            </div>
+
+            {!editImageUrl ? (
+              <label className="border-2 border-dashed border-zinc-300 hover:border-indigo-500 rounded-2xl p-6 text-center cursor-pointer transition-all bg-zinc-50/70 hover:bg-indigo-50/20 flex flex-col items-center justify-center gap-2 group">
+                <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center group-hover:scale-105 transition-transform border border-indigo-100/60 shadow-2xs">
+                  <Upload className="w-5 h-5 text-indigo-600" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-zinc-800 group-hover:text-indigo-600 transition-colors">
+                    Click to browse and upload product photo
+                  </p>
+                  <p className="text-[11px] text-zinc-400 mt-0.5">
+                    Supports high-resolution PNG, JPG, or WEBP
+                  </p>
+                </div>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleEditImageUpload}
+                  className="hidden"
+                />
+              </label>
+            ) : (
+              <div className="relative rounded-2xl overflow-hidden border border-zinc-200 bg-zinc-100 flex items-center justify-center group h-48 shadow-xs">
+                <img src={editImageUrl} alt="Edit Preview" className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                  <label className="px-3 py-1.5 bg-white text-zinc-800 rounded-xl text-xs font-bold shadow-md cursor-pointer hover:bg-zinc-100 transition-colors flex items-center gap-1.5">
+                    <Upload className="w-3.5 h-3.5 text-indigo-600" />
+                    <span>Change Image</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleEditImageUpload}
+                      className="hidden"
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setEditImageUrl('')}
+                    className="px-3 py-1.5 bg-rose-600 text-white rounded-xl text-xs font-bold shadow-md hover:bg-rose-700 transition-colors cursor-pointer"
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Name */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-zinc-800 uppercase tracking-wider">
+              Product Name <span className="text-rose-500">*</span>
+            </label>
+            <input
+              type="text"
+              required
+              placeholder="e.g. Pure Banarasi Silk Saree"
+              value={editTitle}
+              onChange={(e) => setEditTitle(e.target.value)}
+              className="w-full px-3 py-2.5 text-xs bg-zinc-50 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
+            />
+          </div>
+
+          {/* Price */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-zinc-800 uppercase tracking-wider">
+              Product Price (₹ INR) <span className="text-rose-500">*</span>
+            </label>
+            <div className="relative">
+              <DollarSign className="w-4 h-4 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="number"
+                required
+                min="1"
+                placeholder="e.g. 4500"
+                value={editPrice}
+                onChange={(e) => setEditPrice(e.target.value)}
+                className="w-full pl-9 pr-3 py-2.5 text-xs bg-zinc-50 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-zinc-900"
+              />
+            </div>
+          </div>
+
+          {/* Category */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-zinc-800 uppercase tracking-wider">
+              Category
+            </label>
+            <select
+              value={editCategory}
+              onChange={(e) => setEditCategory(e.target.value)}
+              className="w-full px-3 py-2 text-xs bg-zinc-50 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium cursor-pointer"
+            >
+              <option value="Fashion & Apparel">Fashion & Apparel</option>
+              <option value="Jewelry & Silverware">Jewelry & Silverware</option>
+              <option value="Home Decor & Crafts">Home Decor & Crafts</option>
+              <option value="Other Custom Craft">Other Custom Craft</option>
+            </select>
+          </div>
+        </form>
+      </Modal>
+
+      {/* ======================================================== */}
+      {/* COMMON DELETE CONFIRMATION MODAL                         */}
+      {/* ======================================================== */}
+      <Modal
+        isOpen={isDeleteModalOpen}
+        onClose={() => !isDeletingProduct && setIsDeleteModalOpen(false)}
+        title="Delete Product Confirmation"
+        maxWidth="max-w-md"
+        footer={
+          <div className="flex items-center justify-end gap-2.5 w-full">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsDeleteModalOpen(false)}
+              disabled={isDeletingProduct}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={handleConfirmDeleteProduct}
+              disabled={isDeletingProduct}
+              className="bg-rose-600 hover:bg-rose-700 text-white font-bold flex items-center gap-1.5 cursor-pointer shadow-sm"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>{isDeletingProduct ? 'Deleting...' : 'Yes, Delete Product'}</span>
+            </Button>
+          </div>
+        }
+      >
+        {productToDelete && (
+          <div className="space-y-4 text-center py-2">
+            <div className="w-14 h-14 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 flex items-center justify-center mx-auto shadow-2xs">
+              <Trash2 className="w-7 h-7 text-rose-600" />
+            </div>
+
+            <div>
+              <h3 className="text-base font-bold text-zinc-900">
+                Delete &quot;{productToDelete.title}&quot;?
+              </h3>
+              <p className="text-xs text-zinc-500 mt-1 max-w-sm mx-auto leading-relaxed">
+                Are you sure you want to delete this product? This action cannot be undone and will permanently remove it from both the admin catalog and the customer storefront.
+              </p>
+            </div>
+
+            {/* Product Summary Preview */}
+            <div className="p-3 bg-zinc-50 border border-zinc-200/80 rounded-2xl flex items-center gap-3 text-left">
+              <img
+                src={productToDelete.imageUrl}
+                alt={productToDelete.title}
+                className="w-12 h-12 rounded-xl object-cover border border-zinc-200 shrink-0 bg-white"
+              />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-bold text-zinc-900 truncate">
+                  {productToDelete.title}
+                </p>
+                <p className="text-xs font-bold text-emerald-700 mt-0.5">
+                  ₹{productToDelete.price.toLocaleString()} INR
+                </p>
+                <span className="text-[10px] text-zinc-400">
+                  Category: {productToDelete.category}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   );
