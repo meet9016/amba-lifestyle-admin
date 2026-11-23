@@ -9,36 +9,23 @@ interface AdminHeaderProps {
 
 export const AdminHeader: React.FC<AdminHeaderProps> = ({ title = 'Dashboard Overview' }) => {
   return (
-    <header className="h-16 bg-white border-b border-zinc-200 px-6 flex items-center justify-between sticky top-0 z-30 shadow-xs">
+    <header className="h-20 bg-white border-b border-zinc-200/80 px-8 flex items-center justify-between sticky top-0 z-30 shadow-2xs">
       <div>
-        <h2 className="text-lg font-bold text-zinc-900">{title}</h2>
+        <h2 className="text-xl font-extrabold text-zinc-900 tracking-tight">{title}</h2>
+        <p className="text-xs text-zinc-500 font-medium mt-0.5">Real-time artisan inquiries and operations monitoring</p>
       </div>
 
-      <div className="flex items-center gap-4">
-        {/* Search */}
-        <div className="relative w-64 hidden md:block">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
-          <input
-            type="text"
-            placeholder="Search orders, products..."
-            className="w-full pl-9 pr-3 py-1.5 text-xs bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-zinc-800 placeholder-zinc-400"
-          />
-        </div>
-
-        {/* Notifications */}
-        <button className="relative p-2 rounded-lg text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 transition-colors">
-          <Bell className="w-4 h-4" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-indigo-600 rounded-full"></span>
-        </button>
-
-        {/* Profile */}
-        <div className="flex items-center gap-3 pl-3 border-l border-zinc-200">
-          <div className="w-8 h-8 rounded-full bg-indigo-50 text-indigo-700 flex items-center justify-center font-semibold text-xs border border-indigo-100">
-            <User className="w-4 h-4" />
+      <div className="flex items-center gap-5">
+        {/* Profile Card */}
+        <div className="flex items-center gap-3 pl-4 border-l border-zinc-200">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-sm shadow-indigo-500/20">
+            AD
           </div>
           <div className="hidden sm:block text-left">
-            <p className="text-xs font-semibold text-zinc-900">Admin</p>
-            <p className="text-[10px] text-zinc-500">admin@ambalifestyle.com</p>
+            <p className="text-sm font-bold text-zinc-900 leading-tight">Administrator</p>
+            <p className="text-xs text-emerald-600 font-semibold flex items-center gap-1 mt-0.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Online
+            </p>
           </div>
         </div>
       </div>

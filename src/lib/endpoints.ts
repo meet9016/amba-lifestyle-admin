@@ -71,6 +71,15 @@ export const API_ENDPOINTS = {
     UPDATE_STATUS: (id: string) => `${API_BASE_URL}/support/${id}/status`,
   },
 
+  // Customer Custom Requirements & Inquiries
+  INQUIRIES: {
+    LIST: `${API_BASE_URL}/inquiries`,
+    CLEAR_ALL: `${API_BASE_URL}/inquiries`,
+    BY_ID: (id: string) => `${API_BASE_URL}/inquiries/${id}`,
+    UPDATE_STATUS: (id: string) => `${API_BASE_URL}/inquiries/${id}/status`,
+    DELETE: (id: string) => `${API_BASE_URL}/inquiries/${id}`,
+  },
+
   // Health
   HEALTH: `${API_BASE_URL}/health`,
 } as const;

@@ -104,7 +104,7 @@ export default function AdminProductsPage() {
           }));
           setProducts(mapped);
         }
-      } catch (_) {}
+      } catch (_) { }
 
       // 2. Fetch dynamic categories
       try {
@@ -112,7 +112,7 @@ export default function AdminProductsPage() {
         if (catRes.data?.data && catRes.data.data.length > 0) {
           setCategories(catRes.data.data);
         }
-      } catch (_) {}
+      } catch (_) { }
     };
 
     fetchAdminData();
@@ -129,7 +129,7 @@ export default function AdminProductsPage() {
       await apiClient.patch(API_ENDPOINTS.PRODUCTS.APPROVE(p.id), {}, {
         headers: { 'x-user-role': 'admin' }
       });
-    } catch (_) {}
+    } catch (_) { }
 
     setProducts(prev =>
       prev.map(item => item.id === p.id ? { ...item, approvalStatus: 'approved', rejectionReason: '' } : item)
@@ -158,7 +158,7 @@ export default function AdminProductsPage() {
         { reason },
         { headers: { 'x-user-role': 'admin' } }
       );
-    } catch (_) {}
+    } catch (_) { }
 
     setProducts(prev =>
       prev.map(item => item.id === p.id ? { ...item, approvalStatus: 'rejected', rejectionReason: reason } : item)
@@ -231,43 +231,39 @@ export default function AdminProductsPage() {
             <div className="flex border-b border-zinc-100 overflow-x-auto gap-2">
               <button
                 onClick={() => setActiveTab('all')}
-                className={`pb-3 px-3 text-xs font-bold border-b-2 transition-all ${
-                  activeTab === 'all'
+                className={`pb-3 px-3 text-xs font-bold border-b-2 transition-all ${activeTab === 'all'
                     ? 'border-indigo-600 text-indigo-700'
                     : 'border-transparent text-zinc-500 hover:text-zinc-800'
-                }`}
+                  }`}
               >
                 All Products ({products.length})
               </button>
               <button
                 onClick={() => setActiveTab('approved')}
-                className={`pb-3 px-3 text-xs font-bold border-b-2 transition-all flex items-center gap-1.5 ${
-                  activeTab === 'approved'
+                className={`pb-3 px-3 text-xs font-bold border-b-2 transition-all flex items-center gap-1.5 ${activeTab === 'approved'
                     ? 'border-emerald-600 text-emerald-700'
                     : 'border-transparent text-zinc-500 hover:text-zinc-800'
-                }`}
+                  }`}
               >
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                 Live / Approved ({countApproved})
               </button>
               <button
                 onClick={() => setActiveTab('pending')}
-                className={`pb-3 px-3 text-xs font-bold border-b-2 transition-all flex items-center gap-1.5 ${
-                  activeTab === 'pending'
+                className={`pb-3 px-3 text-xs font-bold border-b-2 transition-all flex items-center gap-1.5 ${activeTab === 'pending'
                     ? 'border-amber-600 text-amber-700'
                     : 'border-transparent text-zinc-500 hover:text-zinc-800'
-                }`}
+                  }`}
               >
                 <Clock className="w-3.5 h-3.5 text-amber-600" />
                 Pending Review ({countPending})
               </button>
               <button
                 onClick={() => setActiveTab('rejected')}
-                className={`pb-3 px-3 text-xs font-bold border-b-2 transition-all flex items-center gap-1.5 ${
-                  activeTab === 'rejected'
+                className={`pb-3 px-3 text-xs font-bold border-b-2 transition-all flex items-center gap-1.5 ${activeTab === 'rejected'
                     ? 'border-rose-600 text-rose-700'
                     : 'border-transparent text-zinc-500 hover:text-zinc-800'
-                }`}
+                  }`}
               >
                 <XCircle className="w-3.5 h-3.5 text-rose-600" />
                 Rejected ({countRejected})
@@ -536,11 +532,10 @@ export default function AdminProductsPage() {
                       <button
                         key={idx}
                         onClick={() => setActiveImageIndex(idx)}
-                        className={`w-14 h-14 rounded-xl overflow-hidden border-2 shrink-0 transition-all ${
-                          activeImageIndex === idx
+                        className={`w-14 h-14 rounded-xl overflow-hidden border-2 shrink-0 transition-all ${activeImageIndex === idx
                             ? 'border-indigo-600 ring-2 ring-indigo-500/20'
                             : 'border-zinc-200 opacity-60 hover:opacity-100'
-                        }`}
+                          }`}
                       >
                         <img src={img} alt={`Thumb ${idx}`} className="w-full h-full object-cover" />
                       </button>
