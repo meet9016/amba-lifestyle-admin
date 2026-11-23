@@ -30,7 +30,8 @@ import {
   Wand2,
   MessageSquare,
   Send,
-  ShoppingBag
+  ShoppingBag,
+  ImageOff
 } from 'lucide-react';
 import { AdminSidebar } from '@/components/layout/AdminSidebar';
 import { AdminHeader } from '@/components/layout/AdminHeader';
@@ -482,33 +483,41 @@ export default function AdminInquiriesPage() {
       <div className="flex-1 flex flex-col min-w-0">
         <AdminHeader title="Customer Inquiries Desk" />
 
-        <main className="flex-1 p-6 lg:p-8 space-y-7 w-full">
+        <main className="flex-1 p-6 lg:p-8 space-y-6 w-full">
           {/* Header Bar */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
             <div>
-              <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
-                Customer Inquiries & Custom Requirements
-              </h1>
-              <p className="text-sm text-slate-500 mt-1">
-                Filter by date and status, inspect multiple reference photos, and submit quotations.
+              <div className="flex items-center gap-2">
+                <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                  Customer Inquiries & Requirements
+                </h1>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  Live Sync
+                </span>
+              </div>
+              <p className="text-xs sm:text-sm text-slate-500 mt-1">
+                Manage custom requirements, artisan inquiries, quotation workflows, and live customer chats.
               </p>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2.5 shrink-0">
               {inquiries.length > 0 && (
                 <button
+                  type="button"
                   onClick={handleClearAll}
-                  className="px-4 py-2.5 bg-rose-50 border border-rose-200 text-rose-700 hover:bg-rose-100 text-sm font-semibold rounded-xl shadow-2xs transition-all flex items-center gap-2 cursor-pointer"
+                  className="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
                 >
-                  <Trash2 className="w-4 h-4 text-rose-600" />
-                  <span>Clear All Inquiries</span>
+                  <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                  <span>Clear All</span>
                 </button>
               )}
               <button
+                type="button"
                 onClick={fetchInquiries}
-                className="px-4 py-2.5 bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 text-sm font-semibold rounded-xl shadow-2xs transition-all flex items-center gap-2 cursor-pointer"
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition-all flex items-center gap-2 cursor-pointer shadow-xs shadow-indigo-600/20"
               >
-                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
                 <span>Refresh Data</span>
               </button>
             </div>
@@ -517,36 +526,36 @@ export default function AdminInquiriesPage() {
           {/* Alerts */}
           {notification && (
             <div
-              className={`p-4 rounded-xl text-sm font-semibold flex items-center justify-between shadow-xs border ${notification.type === 'success'
-                ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                : 'bg-rose-50 text-rose-800 border-rose-200'
+              className={`p-3.5 rounded-xl text-xs font-semibold flex items-center justify-between shadow-xs border ${notification.type === 'success'
+                ? 'bg-emerald-50 text-emerald-900 border-emerald-200'
+                : 'bg-rose-50 text-rose-900 border-rose-200'
                 }`}
             >
               <div className="flex items-center gap-2.5">
                 {notification.type === 'success' ? (
-                  <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                 ) : (
-                  <AlertCircle className="w-5 h-5 text-rose-600" />
+                  <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
                 )}
                 <span>{notification.message}</span>
               </div>
-              <button onClick={() => setNotification(null)} className="text-slate-400 hover:text-slate-600 p-1">
+              <button onClick={() => setNotification(null)} className="text-slate-400 hover:text-slate-600 p-1 cursor-pointer">
                 <X className="w-4 h-4" />
               </button>
             </div>
           )}
 
-          {/* COMPACT & SLEEK 4 STAT TILES */}
+          {/* SLEEK 4 STAT TILES */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
             {/* Tile 1: Total Inquiries */}
-            <div className="bg-white border border-slate-200/90 rounded-xl p-3.5 shadow-2xs hover:border-slate-300 transition-all flex items-center justify-between">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-9 h-9 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
-                  <ClipboardList className="w-4 h-4" />
+            <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-xs hover:border-slate-300 transition-all flex items-center justify-between">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 border border-indigo-100/60">
+                  <ClipboardList className="w-5 h-5" />
                 </div>
                 <div className="min-w-0">
                   <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider truncate">Total Inquiries</p>
-                  <h3 className="text-xl font-black text-slate-900 leading-tight mt-0.5">{totalCount}</h3>
+                  <h3 className="text-2xl font-black text-slate-900 leading-tight mt-0.5">{totalCount}</h3>
                 </div>
               </div>
               <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-100 shrink-0">
@@ -555,14 +564,14 @@ export default function AdminInquiriesPage() {
             </div>
 
             {/* Tile 2: Today's Inquiries */}
-            <div className="bg-white border border-slate-200/90 rounded-xl p-3.5 shadow-2xs hover:border-slate-300 transition-all flex items-center justify-between">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-                  <Calendar className="w-4 h-4" />
+            <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-xs hover:border-slate-300 transition-all flex items-center justify-between">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-100/60">
+                  <Calendar className="w-5 h-5" />
                 </div>
                 <div className="min-w-0">
                   <p className="text-[11px] font-bold text-emerald-700 uppercase tracking-wider truncate">Today's Inquiries</p>
-                  <h3 className="text-xl font-black text-emerald-700 leading-tight mt-0.5">+{todayCount}</h3>
+                  <h3 className="text-2xl font-black text-emerald-700 leading-tight mt-0.5">+{todayCount}</h3>
                 </div>
               </div>
               <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 shrink-0">
@@ -571,14 +580,14 @@ export default function AdminInquiriesPage() {
             </div>
 
             {/* Tile 3: Pending Review */}
-            <div className="bg-white border border-slate-200/90 rounded-xl p-3.5 shadow-2xs hover:border-slate-300 transition-all flex items-center justify-between">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-9 h-9 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
-                  <Clock className="w-4 h-4" />
+            <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-xs hover:border-slate-300 transition-all flex items-center justify-between">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 border border-amber-100/60">
+                  <Clock className="w-5 h-5" />
                 </div>
                 <div className="min-w-0">
                   <p className="text-[11px] font-bold text-amber-700 uppercase tracking-wider truncate">Pending Review</p>
-                  <h3 className="text-xl font-black text-amber-700 leading-tight mt-0.5">{pendingCount}</h3>
+                  <h3 className="text-2xl font-black text-amber-700 leading-tight mt-0.5">{pendingCount}</h3>
                 </div>
               </div>
               <span className="text-[10px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200 shrink-0">
@@ -587,14 +596,14 @@ export default function AdminInquiriesPage() {
             </div>
 
             {/* Tile 4: This Week */}
-            <div className="bg-white border border-slate-200/90 rounded-xl p-3.5 shadow-2xs hover:border-slate-300 transition-all flex items-center justify-between">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-9 h-9 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
-                  <Calendar className="w-4 h-4" />
+            <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-xs hover:border-slate-300 transition-all flex items-center justify-between">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0 border border-purple-100/60">
+                  <Calendar className="w-5 h-5" />
                 </div>
                 <div className="min-w-0">
                   <p className="text-[11px] font-bold text-purple-700 uppercase tracking-wider truncate">This Week</p>
-                  <h3 className="text-xl font-black text-purple-700 leading-tight mt-0.5">{thisWeekCount}</h3>
+                  <h3 className="text-2xl font-black text-purple-700 leading-tight mt-0.5">{thisWeekCount}</h3>
                 </div>
               </div>
               <span className="text-[10px] font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-md border border-purple-200 shrink-0">
@@ -603,22 +612,23 @@ export default function AdminInquiriesPage() {
             </div>
           </div>
 
-          {/* INQUIRIES LIST TABLE WITH CATEGORY TABS */}
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-            {/* 0. PRIMARY WORKFLOW TABS: ALL vs CUSTOM REQUIREMENT vs ARTISAN PRODUCT */}
-            <div className="bg-slate-50 border-b border-slate-200 px-4 pt-3 flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-2 overflow-x-auto overflow-y-hidden">
+          {/* MAIN INQUIRIES CONTAINER WITH PROFESSIONAL FILTER CENTER */}
+          <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
+            {/* TIER 1: PRIMARY WORKFLOW SEGMENTED CONTROL & SEARCH/PERIOD */}
+            <div className="p-4 border-b border-slate-200/80 bg-slate-50/60 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3.5">
+              {/* Segmented Type Control */}
+              <div className="inline-flex items-center p-1 bg-slate-200/70 rounded-xl gap-1 shrink-0 overflow-x-auto">
                 <button
                   type="button"
                   onClick={() => setInquiryTypeFilter('all')}
-                  className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-t-xl border-t border-x transition-all cursor-pointer whitespace-nowrap ${inquiryTypeFilter === 'all'
-                    ? 'bg-white text-indigo-700 border-slate-200 border-b-2 border-b-white shadow-2xs font-extrabold'
-                    : 'bg-transparent text-slate-600 hover:text-slate-900 border-transparent hover:bg-slate-200/50'
+                  className={`flex items-center gap-2 px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer whitespace-nowrap ${inquiryTypeFilter === 'all'
+                    ? 'bg-white text-slate-900 shadow-xs font-black ring-1 ring-black/5'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/40'
                     }`}
                 >
                   <ClipboardList className="w-3.5 h-3.5 text-indigo-600" />
                   <span>All Inquiries</span>
-                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${inquiryTypeFilter === 'all' ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-200 text-slate-600'
+                  <span className={`text-[10px] font-black px-1.5 py-0.2 rounded-md ${inquiryTypeFilter === 'all' ? 'bg-indigo-50 text-indigo-700' : 'bg-slate-300/60 text-slate-600'
                     }`}>
                     {totalCount}
                   </span>
@@ -627,14 +637,14 @@ export default function AdminInquiriesPage() {
                 <button
                   type="button"
                   onClick={() => setInquiryTypeFilter('custom_requirement')}
-                  className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-t-xl border-t border-x transition-all cursor-pointer whitespace-nowrap ${inquiryTypeFilter === 'custom_requirement'
-                    ? 'bg-white text-amber-900 border-slate-200 border-b-2 border-b-white shadow-2xs font-extrabold'
-                    : 'bg-transparent text-slate-600 hover:text-slate-900 border-transparent hover:bg-slate-200/50'
+                  className={`flex items-center gap-2 px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer whitespace-nowrap ${inquiryTypeFilter === 'custom_requirement'
+                    ? 'bg-white text-amber-950 shadow-xs font-black ring-1 ring-black/5'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/40'
                     }`}
                 >
                   <Sparkles className="w-3.5 h-3.5 text-amber-600" />
                   <span>Custom Requirements</span>
-                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${inquiryTypeFilter === 'custom_requirement' ? 'bg-amber-100 text-amber-800' : 'bg-slate-200 text-slate-600'
+                  <span className={`text-[10px] font-black px-1.5 py-0.2 rounded-md ${inquiryTypeFilter === 'custom_requirement' ? 'bg-amber-100 text-amber-900' : 'bg-slate-300/60 text-slate-600'
                     }`}>
                     {customRequirementCount}
                   </span>
@@ -643,80 +653,70 @@ export default function AdminInquiriesPage() {
                 <button
                   type="button"
                   onClick={() => setInquiryTypeFilter('artisan_product')}
-                  className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-t-xl border-t border-x transition-all cursor-pointer whitespace-nowrap ${inquiryTypeFilter === 'artisan_product'
-                    ? 'bg-white text-emerald-900 border-slate-200 border-b-2 border-b-white shadow-2xs font-extrabold'
-                    : 'bg-transparent text-slate-600 hover:text-slate-900 border-transparent hover:bg-slate-200/50'
+                  className={`flex items-center gap-2 px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer whitespace-nowrap ${inquiryTypeFilter === 'artisan_product'
+                    ? 'bg-white text-emerald-950 shadow-xs font-black ring-1 ring-black/5'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/40'
                     }`}
                 >
                   <ShoppingBag className="w-3.5 h-3.5 text-emerald-600" />
                   <span>Artisan Products</span>
-                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${inquiryTypeFilter === 'artisan_product' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'
+                  <span className={`text-[10px] font-black px-1.5 py-0.2 rounded-md ${inquiryTypeFilter === 'artisan_product' ? 'bg-emerald-100 text-emerald-900' : 'bg-slate-300/60 text-slate-600'
                     }`}>
                     {artisanProductCount}
                   </span>
                 </button>
               </div>
 
-              {inquiryTypeFilter !== 'all' && (
-                <button
-                  type="button"
-                  onClick={() => setInquiryTypeFilter('all')}
-                  className="text-xs text-indigo-600 hover:text-indigo-800 font-bold shrink-0 pb-1 cursor-pointer"
-                >
-                  ← Show All Types ({totalCount})
-                </button>
-              )}
+              {/* Right: Search & Period dropdown */}
+              <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
+                {/* Period select */}
+                <div className="flex items-center gap-1.5 bg-white border border-slate-200/90 rounded-xl px-2.5 py-1.5 shadow-2xs">
+                  <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Period:</span>
+                  <select
+                    value={timeframeFilter}
+                    onChange={(e) => setTimeframeFilter(e.target.value as any)}
+                    className="text-xs font-bold bg-transparent text-slate-700 focus:outline-none cursor-pointer pr-1"
+                  >
+                    <option value="all">All Time ({totalCount})</option>
+                    <option value="today">Today ({todayCount})</option>
+                    <option value="week">This Week ({thisWeekCount})</option>
+                    <option value="month">This Month ({thisMonthCount})</option>
+                  </select>
+                </div>
+
+                {/* Search input */}
+                <div className="relative flex-1 sm:w-64">
+                  <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    placeholder="Search by ID, name, email, phone..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-9 pr-7 py-1.5 text-xs bg-white border border-slate-200/90 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 shadow-2xs font-medium text-slate-800 placeholder:text-slate-400 transition-all"
+                  />
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery('')}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
 
-            {/* 1. CATEGORY TABS (CATEGORY WISE BREAKDOWN - MODERN SLEEK ICONS) */}
-            <div className="bg-slate-100/80 border-b border-slate-200 px-4 pt-2.5 flex items-center justify-between gap-3 overflow-x-auto overflow-y-hidden">
-              <div className="flex items-center gap-2 overflow-x-auto overflow-y-hidden">
+            {/* TIER 2: CATEGORY FILTER PILLS & STATUS FILTER PILLS */}
+            <div className="px-4 py-2.5 border-b border-slate-200/70 bg-white flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 overflow-x-auto">
+              {/* Category Filter Chips */}
+              <div className="flex items-center gap-1.5 overflow-x-auto py-0.5">
                 {[
-                  {
-                    id: 'all',
-                    label: 'All Inquiries',
-                    count: totalCount,
-                    icon: LayoutGrid,
-                    color: 'text-indigo-600',
-                    activeBg: 'bg-indigo-50',
-                    badgeActive: 'bg-indigo-100 text-indigo-700'
-                  },
-                  {
-                    id: 'fashion',
-                    label: 'Fashion & Apparel',
-                    count: fashionCount,
-                    icon: Scissors,
-                    color: 'text-pink-600',
-                    activeBg: 'bg-pink-50',
-                    badgeActive: 'bg-pink-100 text-pink-700'
-                  },
-                  {
-                    id: 'jewelry',
-                    label: 'Jewelry & Silver',
-                    count: jewelryCount,
-                    icon: Crown,
-                    color: 'text-amber-600',
-                    activeBg: 'bg-amber-50',
-                    badgeActive: 'bg-amber-100 text-amber-700'
-                  },
-                  {
-                    id: 'home_decor',
-                    label: 'Home Decor & Living',
-                    count: homeDecorCount,
-                    icon: Armchair,
-                    color: 'text-emerald-600',
-                    activeBg: 'bg-emerald-50',
-                    badgeActive: 'bg-emerald-100 text-emerald-700'
-                  },
-                  {
-                    id: 'other',
-                    label: 'Artisan Crafts',
-                    count: otherCount,
-                    icon: Wand2,
-                    color: 'text-purple-600',
-                    activeBg: 'bg-purple-50',
-                    badgeActive: 'bg-purple-100 text-purple-700'
-                  },
+                  { id: 'all', label: 'All Categories', count: totalCount, icon: LayoutGrid },
+                  { id: 'fashion', label: 'Fashion & Apparel', count: fashionCount, icon: Scissors },
+                  { id: 'jewelry', label: 'Jewelry & Silver', count: jewelryCount, icon: Crown },
+                  { id: 'home_decor', label: 'Home Decor', count: homeDecorCount, icon: Armchair },
+                  { id: 'other', label: 'Custom Craft', count: otherCount, icon: Wand2 },
                 ].map((cat) => {
                   const Icon = cat.icon;
                   const isSelected = categoryFilter === cat.id;
@@ -724,22 +724,15 @@ export default function AdminInquiriesPage() {
                     <button
                       key={cat.id}
                       onClick={() => setCategoryFilter(cat.id)}
-                      className={`group flex items-center gap-2.5 px-3.5 py-2 text-xs font-bold transition-all cursor-pointer whitespace-nowrap rounded-t-xl border-t border-x ${isSelected
-                        ? 'bg-white text-slate-900 border-slate-200 border-b-2 border-b-white shadow-2xs'
-                        : 'bg-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-200/50 border-transparent'
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${isSelected
+                        ? 'bg-slate-900 text-white font-bold shadow-2xs'
+                        : 'bg-slate-100/70 text-slate-600 hover:bg-slate-200/60 hover:text-slate-900'
                         }`}
                     >
-                      <div
-                        className={`w-6 h-6 rounded-lg flex items-center justify-center transition-colors ${isSelected ? cat.activeBg + ' ' + cat.color : 'bg-slate-200/70 text-slate-500 group-hover:bg-slate-200'
-                          }`}
-                      >
-                        <Icon className="w-3.5 h-3.5 stroke-[2.2]" />
-                      </div>
-                      <span className="tracking-tight">{cat.label}</span>
-                      <span
-                        className={`text-[10px] font-black px-2 py-0.5 rounded-full transition-colors ${isSelected ? cat.badgeActive : 'bg-slate-200/90 text-slate-700'
-                          }`}
-                      >
+                      <Icon className="w-3.5 h-3.5 shrink-0" />
+                      <span>{cat.label}</span>
+                      <span className={`text-[10px] font-black px-1.5 py-0.2 rounded-md ${isSelected ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-600'
+                        }`}>
                         {cat.count}
                       </span>
                     </button>
@@ -747,81 +740,54 @@ export default function AdminInquiriesPage() {
                 })}
               </div>
 
-              {categoryFilter !== 'all' && (
-                <button
-                  onClick={() => setCategoryFilter('all')}
-                  className="text-xs text-indigo-600 hover:text-indigo-800 font-bold shrink-0 pb-1 cursor-pointer"
-                >
-                  ← Show All ({totalCount})
-                </button>
-              )}
-            </div>
+              {/* Status Filter Chips & Reset */}
+              <div className="flex items-center gap-1.5 shrink-0 overflow-x-auto py-0.5">
+                {[
+                  { id: 'all', label: 'All Status' },
+                  { id: 'pending', label: 'Pending', dot: 'bg-amber-500', count: pendingCount },
+                  { id: 'in_review', label: 'Review', dot: 'bg-sky-500' },
+                  { id: 'quoted', label: 'Quoted', dot: 'bg-purple-500' },
+                  { id: 'approved', label: 'Approval', dot: 'bg-emerald-500' },
+                  { id: 'rejected', label: 'Rejected', dot: 'bg-rose-500' },
+                ].map((tab) => {
+                  const isSelected = statusFilter === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => setStatusFilter(tab.id)}
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${isSelected
+                        ? 'bg-indigo-600 text-white font-bold shadow-2xs'
+                        : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200/80'
+                        }`}
+                    >
+                      {tab.dot && (
+                        <span className={`w-1.5 h-1.5 rounded-full ${tab.dot} ${isSelected ? 'ring-2 ring-white/50' : ''}`} />
+                      )}
+                      <span>{tab.label}</span>
+                      {tab.count !== undefined && (
+                        <span className={`text-[10px] font-black px-1 rounded ${isSelected ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'
+                          }`}>
+                          {tab.count}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
 
-            {/* 2. SUB-TOOLBAR: PERIOD DROPDOWN, STATUS FILTER & COMPACT SEARCH */}
-            <div className="px-4 py-2.5 border-b border-slate-200/80 bg-white flex flex-col md:flex-row items-center justify-between gap-3">
-              {/* Left: Period Dropdown */}
-              <div className="flex items-center gap-2 w-full md:w-auto shrink-0">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider shrink-0">Period:</span>
-                <select
-                  value={timeframeFilter}
-                  onChange={(e) => setTimeframeFilter(e.target.value as any)}
-                  className="px-3 py-1.5 text-xs font-bold bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer shadow-2xs"
-                >
-                  <option value="all">All Time ({totalCount})</option>
-                  <option value="today">Today ({todayCount})</option>
-                  <option value="week">This Week ({thisWeekCount})</option>
-                  <option value="month">This Month ({thisMonthCount})</option>
-                </select>
-
-                {(timeframeFilter !== 'all' || statusFilter !== 'all' || categoryFilter !== 'all' || searchQuery) && (
+                {(timeframeFilter !== 'all' || statusFilter !== 'all' || categoryFilter !== 'all' || inquiryTypeFilter !== 'all' || searchQuery) && (
                   <button
                     onClick={() => {
                       setTimeframeFilter('all');
                       setStatusFilter('all');
                       setCategoryFilter('all');
+                      setInquiryTypeFilter('all');
                       setSearchQuery('');
                     }}
-                    className="text-xs text-indigo-600 hover:text-indigo-800 font-bold cursor-pointer ml-1"
+                    className="text-xs text-indigo-600 hover:text-indigo-800 font-bold cursor-pointer ml-1 underline decoration-indigo-200 underline-offset-2 shrink-0"
                   >
-                    Reset Filters
+                    Reset All
                   </button>
                 )}
-              </div>
-
-              {/* Right: Status Filters & Compact Search */}
-              <div className="flex flex-col sm:flex-row items-center gap-2.5 w-full md:w-auto justify-end">
-                <div className="flex items-center gap-1 overflow-x-auto w-full sm:w-auto">
-                  {[
-                    { id: 'all', label: 'All' },
-                    { id: 'pending', label: `Pending (${pendingCount})` },
-                    { id: 'in_review', label: 'Review' },
-                    { id: 'quoted', label: 'Quoted' },
-                    { id: 'approved', label: 'Approval' },
-                    { id: 'rejected', label: 'Rejected' },
-                  ].map((tab) => (
-                    <button
-                      key={tab.id}
-                      onClick={() => setStatusFilter(tab.id)}
-                      className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-all cursor-pointer whitespace-nowrap ${statusFilter === tab.id
-                        ? 'bg-indigo-600 text-white shadow-2xs font-bold'
-                        : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200'
-                        }`}
-                    >
-                      {tab.label}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="relative w-full sm:w-56 shrink-0">
-                  <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="text"
-                    placeholder="Search inquiries..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white font-medium"
-                  />
-                </div>
               </div>
             </div>
 
@@ -835,42 +801,58 @@ export default function AdminInquiriesPage() {
                 <ClipboardList className="w-12 h-12 text-slate-300 mx-auto mb-3" />
                 <h3 className="text-base font-bold text-slate-700">No Inquiries Found</h3>
                 <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
-                  No customer requirements match the selected timeframe or status.
+                  No inquiries match your current category, timeframe, status, or search query.
                 </p>
+                {(timeframeFilter !== 'all' || statusFilter !== 'all' || categoryFilter !== 'all' || inquiryTypeFilter !== 'all' || searchQuery) && (
+                  <button
+                    onClick={() => {
+                      setTimeframeFilter('all');
+                      setStatusFilter('all');
+                      setCategoryFilter('all');
+                      setInquiryTypeFilter('all');
+                      setSearchQuery('');
+                    }}
+                    className="mt-4 px-4 py-2 bg-indigo-50 text-indigo-700 border border-indigo-200 text-xs font-bold rounded-xl hover:bg-indigo-100 transition-colors cursor-pointer inline-flex items-center gap-1.5"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    <span>Clear All Filters</span>
+                  </button>
+                )}
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm">
-                  <thead className="bg-slate-100/70 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-xs">
+                  <thead className="bg-slate-50/90 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[11px]">
                     <tr>
-                      <th className="py-4 px-5">Inquiry Ref</th>
-                      <th className="py-4 px-5">Category</th>
-                      <th className="py-4 px-5">Product Details</th>
-                      <th className="py-4 px-5">Dimensions / Size</th>
-                      <th className="py-4 px-5">Email</th>
-                      <th className="py-4 px-5">Quotation</th>
-                      <th className="py-4 px-5">Status</th>
-                      <th className="py-4 px-5">Date Submitted</th>
-                      <th className="py-4 px-5 text-right">Action</th>
+                      <th className="py-3.5 px-5">Inquiry Ref</th>
+                      <th className="py-3.5 px-5">Category</th>
+                      <th className="py-3.5 px-5">Product Details</th>
+                      <th className="py-3.5 px-5">Dimensions / Size</th>
+                      <th className="py-3.5 px-5">Customer Info</th>
+                      <th className="py-3.5 px-5">Quotation</th>
+                      <th className="py-3.5 px-5">Status</th>
+                      <th className="py-3.5 px-5">Submitted</th>
+                      <th className="py-3.5 px-5 text-right">Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 bg-white">
                     {filteredInquiries.map((inq) => {
-                      const primaryImage = inq.images?.[0] || 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=300&q=80';
+                      const hasImage = Boolean(inq.images && inq.images.length > 0 && inq.images[0]);
+                      const primaryImage = hasImage ? inq.images![0] : '';
                       const isNewToday = isToday(inq.createdAt);
                       return (
-                        <tr key={inq._id || inq.inquiryNumber} className="hover:bg-slate-50/80 transition-colors">
-                          <td className="py-4 px-5">
-                            <span className="font-mono font-bold text-indigo-700 text-sm">
+                        <tr key={inq._id || inq.inquiryNumber} className="hover:bg-slate-50/75 transition-colors">
+                          <td className="py-4 px-5 align-top">
+                            <span className="font-mono font-black text-indigo-700 text-xs bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-200/80 inline-block">
                               #{inq.inquiryNumber}
                             </span>
                             {isNewToday && (
-                              <span className="block text-[11px] text-emerald-600 font-bold mt-0.5">
+                              <span className="block text-[10px] text-emerald-700 font-bold mt-1">
                                 ● New Today
                               </span>
                             )}
                             {inq.messages && inq.messages.length > 0 && (
-                              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-full mt-1">
+                              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-full mt-1.5">
                                 <MessageSquare className="w-3 h-3 text-indigo-600" />
                                 {inq.messages.length} msg{inq.messages.length > 1 ? 's' : ''}
                                 {inq.messages[inq.messages.length - 1]?.sender === 'customer' && (
@@ -878,37 +860,47 @@ export default function AdminInquiriesPage() {
                                 )}
                               </span>
                             )}
-                            <div className="mt-1">
+                            <div className="mt-1.5">
                               {isArtisanProductInquiry(inq) ? (
-                                <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
+                                <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md shadow-2xs">
                                   <ShoppingBag className="w-2.5 h-2.5 text-emerald-600" /> Artisan Product
                                 </span>
                               ) : (
-                                <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md">
+                                <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md shadow-2xs">
                                   <Sparkles className="w-2.5 h-2.5 text-amber-600" /> Custom Studio
                                 </span>
                               )}
                             </div>
                           </td>
-                          <td className="py-4 px-5 whitespace-nowrap">
+                          <td className="py-4 px-5 whitespace-nowrap align-top">
                             {getCategoryBadge(inq.category)}
                           </td>
-                          <td className="py-4 px-5">
-                            <div className="flex items-center gap-3.5">
-                              <div
-                                onClick={() => setIsImagePreviewOpen(primaryImage)}
-                                className="w-12 h-12 rounded-xl overflow-hidden border border-slate-200 shrink-0 cursor-pointer relative group bg-slate-100 shadow-2xs"
-                                title="Click to view image"
-                              >
-                                <img
-                                  src={primaryImage}
-                                  alt={inq.name}
-                                  className="w-full h-full object-cover group-hover:scale-110 transition-transform"
-                                />
-                                <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                                  <Eye className="w-4 h-4 text-white" />
+                          <td className="py-4 px-5 align-top">
+                            <div className="flex items-start gap-3">
+                              {hasImage ? (
+                                <div
+                                  onClick={() => setIsImagePreviewOpen(primaryImage)}
+                                  className="w-12 h-12 rounded-xl overflow-hidden border border-slate-200 shrink-0 cursor-pointer relative group bg-slate-100 shadow-2xs"
+                                  title="Click to view image"
+                                >
+                                  <img
+                                    src={primaryImage}
+                                    alt={inq.name}
+                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-200"
+                                  />
+                                  <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                    <Eye className="w-4 h-4 text-white" />
+                                  </div>
                                 </div>
-                              </div>
+                              ) : (
+                                <div
+                                  className="w-12 h-12 rounded-xl border border-dashed border-slate-200 shrink-0 flex flex-col items-center justify-center bg-slate-50 text-slate-400"
+                                  title="No photo attached"
+                                >
+                                  <ImageOff className="w-4 h-4 text-slate-300" />
+                                  <span className="text-[8px] font-bold text-slate-400 uppercase mt-0.5">None</span>
+                                </div>
+                              )}
                               <div className="min-w-0">
                                 <div className="flex items-center gap-2 flex-wrap">
                                   <p className="font-bold text-slate-900 text-sm leading-snug">{inq.name}</p>
@@ -922,61 +914,65 @@ export default function AdminInquiriesPage() {
                                   )}
                                 </div>
                                 {inq.description && (
-                                  <p className="text-xs text-slate-500 line-clamp-1 max-w-xs mt-0.5">
+                                  <p className="text-xs text-slate-500 line-clamp-2 max-w-xs mt-0.5 leading-relaxed">
                                     {inq.description}
                                   </p>
                                 )}
                               </div>
                             </div>
                           </td>
-                          <td className="py-4 px-5">
-                            <span className="font-semibold text-slate-800 bg-slate-100 px-2.5 py-1 rounded-lg text-xs">
+                          <td className="py-4 px-5 align-top">
+                            <span className="font-semibold text-slate-800 bg-slate-100/90 px-2.5 py-1 rounded-lg text-xs border border-slate-200/60 block truncate max-w-xs">
                               {inq.size}
                             </span>
-                            <span className="text-slate-400 block text-xs mt-1">
-                              Qty: {inq.quantity || 1} units
+                            <span className="text-slate-400 block text-[11px] mt-1 font-medium">
+                              Qty: <strong className="text-slate-600">{inq.quantity || 1}</strong> unit(s)
                             </span>
                           </td>
-                          <td className="py-4 px-5">
-                            <p className="font-semibold text-slate-800 text-sm">{inq.email}</p>
-                            {inq.phone && (
-                              <p className="text-xs text-slate-400 mt-0.5">{inq.phone}</p>
+                          <td className="py-4 px-5 align-top">
+                            <p className="font-semibold text-slate-800 text-xs">{inq.email}</p>
+                            {inq.phone ? (
+                              <p className="text-[11px] text-slate-500 font-mono mt-0.5">{inq.phone}</p>
+                            ) : (
+                              <span className="text-slate-400 text-[11px] italic">No phone</span>
                             )}
                           </td>
-                          <td className="py-4 px-5 font-bold text-sm">
+                          <td className="py-4 px-5 font-bold text-sm align-top">
                             {inq.quotedPrice && inq.quotedPrice > 0 ? (
-                              <span className="text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
+                              <span className="text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200 inline-block font-mono font-bold">
                                 ₹{inq.quotedPrice.toLocaleString()}
                               </span>
                             ) : (
-                              <span className="text-slate-400 font-normal italic text-xs">Not Quoted</span>
+                              <span className="text-slate-400 font-normal italic text-xs">Pending Quote</span>
                             )}
                           </td>
-                          <td className="py-4 px-5">
+                          <td className="py-4 px-5 align-top whitespace-nowrap">
                             {getStatusBadge(inq.status)}
                           </td>
-                          <td className="py-4 px-5 text-slate-500 text-xs whitespace-nowrap">
+                          <td className="py-4 px-5 text-slate-500 text-xs whitespace-nowrap align-top">
                             {inq.createdAt ? (
                               <div>
-                                <span className="font-medium text-slate-700 block">{new Date(inq.createdAt).toLocaleDateString()}</span>
+                                <span className="font-semibold text-slate-700 block">{new Date(inq.createdAt).toLocaleDateString()}</span>
                                 <span className="text-slate-400 text-[11px]">{new Date(inq.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                               </div>
                             ) : (
                               'Today'
                             )}
                           </td>
-                          <td className="py-4 px-5 text-right">
-                            <div className="flex items-center justify-end gap-2">
+                          <td className="py-4 px-5 text-right align-top">
+                            <div className="flex items-center justify-end gap-1.5">
                               <button
+                                type="button"
                                 onClick={() => openUpdateModal(inq)}
-                                className="px-3.5 py-1.5 bg-indigo-50 hover:bg-indigo-600 hover:text-white text-indigo-700 border border-indigo-200 rounded-xl text-xs font-bold transition-all inline-flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                                className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all inline-flex items-center gap-1.5 cursor-pointer shadow-xs shadow-indigo-600/20"
                               >
                                 <Edit3 className="w-3.5 h-3.5" />
-                                Review
+                                <span>Review</span>
                               </button>
                               <button
+                                type="button"
                                 onClick={() => handleOpenDeleteModal(inq)}
-                                className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer"
+                                className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer"
                                 title="Delete inquiry"
                               >
                                 <Trash2 className="w-4 h-4" />

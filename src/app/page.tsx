@@ -31,7 +31,8 @@ import {
   Wand2,
   MessageSquare,
   Send,
-  ShoppingBag
+  ShoppingBag,
+  ImageOff
 } from 'lucide-react';
 
 export interface InquiryMessage {
@@ -637,21 +638,22 @@ export default function AdminDashboard() {
           </div>
 
           {/* DYNAMIC INCOMING REQUIREMENTS TABLE WITH TABS */}
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-            {/* 0. PRIMARY WORKFLOW TABS: ALL vs CUSTOM REQUIREMENT vs ARTISAN PRODUCT */}
-            <div className="bg-slate-50 border-b border-slate-200 px-4 pt-3 flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-2 overflow-x-auto overflow-y-hidden">
+          <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
+            {/* TIER 1: PRIMARY WORKFLOW SEGMENTED CONTROL & SEARCH/PERIOD */}
+            <div className="p-4 border-b border-slate-200/80 bg-slate-50/60 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3.5">
+              {/* Segmented Type Control */}
+              <div className="inline-flex items-center p-1 bg-slate-200/70 rounded-xl gap-1 shrink-0 overflow-x-auto">
                 <button
                   type="button"
                   onClick={() => setInquiryTypeFilter('all')}
-                  className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-t-xl border-t border-x transition-all cursor-pointer whitespace-nowrap ${inquiryTypeFilter === 'all'
-                    ? 'bg-white text-indigo-700 border-slate-200 border-b-2 border-b-white shadow-2xs font-extrabold'
-                    : 'bg-transparent text-slate-600 hover:text-slate-900 border-transparent hover:bg-slate-200/50'
+                  className={`flex items-center gap-2 px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer whitespace-nowrap ${inquiryTypeFilter === 'all'
+                    ? 'bg-white text-slate-900 shadow-xs font-black ring-1 ring-black/5'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/40'
                     }`}
                 >
                   <ClipboardList className="w-3.5 h-3.5 text-indigo-600" />
                   <span>All Inquiries</span>
-                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${inquiryTypeFilter === 'all' ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-200 text-slate-600'
+                  <span className={`text-[10px] font-black px-1.5 py-0.2 rounded-md ${inquiryTypeFilter === 'all' ? 'bg-indigo-50 text-indigo-700' : 'bg-slate-300/60 text-slate-600'
                     }`}>
                     {totalCount}
                   </span>
@@ -660,14 +662,14 @@ export default function AdminDashboard() {
                 <button
                   type="button"
                   onClick={() => setInquiryTypeFilter('custom_requirement')}
-                  className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-t-xl border-t border-x transition-all cursor-pointer whitespace-nowrap ${inquiryTypeFilter === 'custom_requirement'
-                    ? 'bg-white text-amber-900 border-slate-200 border-b-2 border-b-white shadow-2xs font-extrabold'
-                    : 'bg-transparent text-slate-600 hover:text-slate-900 border-transparent hover:bg-slate-200/50'
+                  className={`flex items-center gap-2 px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer whitespace-nowrap ${inquiryTypeFilter === 'custom_requirement'
+                    ? 'bg-white text-amber-950 shadow-xs font-black ring-1 ring-black/5'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/40'
                     }`}
                 >
                   <Sparkles className="w-3.5 h-3.5 text-amber-600" />
                   <span>Custom Requirements</span>
-                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${inquiryTypeFilter === 'custom_requirement' ? 'bg-amber-100 text-amber-800' : 'bg-slate-200 text-slate-600'
+                  <span className={`text-[10px] font-black px-1.5 py-0.2 rounded-md ${inquiryTypeFilter === 'custom_requirement' ? 'bg-amber-100 text-amber-900' : 'bg-slate-300/60 text-slate-600'
                     }`}>
                     {customRequirementCount}
                   </span>
@@ -676,80 +678,70 @@ export default function AdminDashboard() {
                 <button
                   type="button"
                   onClick={() => setInquiryTypeFilter('artisan_product')}
-                  className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-t-xl border-t border-x transition-all cursor-pointer whitespace-nowrap ${inquiryTypeFilter === 'artisan_product'
-                    ? 'bg-white text-emerald-900 border-slate-200 border-b-2 border-b-white shadow-2xs font-extrabold'
-                    : 'bg-transparent text-slate-600 hover:text-slate-900 border-transparent hover:bg-slate-200/50'
+                  className={`flex items-center gap-2 px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer whitespace-nowrap ${inquiryTypeFilter === 'artisan_product'
+                    ? 'bg-white text-emerald-950 shadow-xs font-black ring-1 ring-black/5'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/40'
                     }`}
                 >
                   <ShoppingBag className="w-3.5 h-3.5 text-emerald-600" />
                   <span>Artisan Products</span>
-                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${inquiryTypeFilter === 'artisan_product' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'
+                  <span className={`text-[10px] font-black px-1.5 py-0.2 rounded-md ${inquiryTypeFilter === 'artisan_product' ? 'bg-emerald-100 text-emerald-900' : 'bg-slate-300/60 text-slate-600'
                     }`}>
                     {artisanProductCount}
                   </span>
                 </button>
               </div>
 
-              {inquiryTypeFilter !== 'all' && (
-                <button
-                  type="button"
-                  onClick={() => setInquiryTypeFilter('all')}
-                  className="text-xs text-indigo-600 hover:text-indigo-800 font-bold shrink-0 pb-1 cursor-pointer"
-                >
-                  ← Show All Types ({totalCount})
-                </button>
-              )}
+              {/* Right: Search & Period dropdown */}
+              <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
+                {/* Period select */}
+                <div className="flex items-center gap-1.5 bg-white border border-slate-200/90 rounded-xl px-2.5 py-1.5 shadow-2xs">
+                  <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Period:</span>
+                  <select
+                    value={dashboardTimeframe}
+                    onChange={(e) => setDashboardTimeframe(e.target.value as any)}
+                    className="text-xs font-bold bg-transparent text-slate-700 focus:outline-none cursor-pointer pr-1"
+                  >
+                    <option value="all">All Time ({totalCount})</option>
+                    <option value="today">Today ({todayCount})</option>
+                    <option value="week">This Week ({thisWeekCount})</option>
+                    <option value="month">This Month ({thisMonthCount})</option>
+                  </select>
+                </div>
+
+                {/* Search input */}
+                <div className="relative flex-1 sm:w-64">
+                  <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    placeholder="Search name, email, ID..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-9 pr-7 py-1.5 text-xs bg-white border border-slate-200/90 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 shadow-2xs font-medium text-slate-800 placeholder:text-slate-400 transition-all"
+                  />
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery('')}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
 
-            {/* 1. CATEGORY TABS (CATEGORY WISE BREAKDOWN - MODERN SLEEK ICONS) */}
-            <div className="bg-slate-100/80 border-b border-slate-200 px-4 pt-2.5 flex items-center justify-between gap-3 overflow-x-auto overflow-y-hidden">
-              <div className="flex items-center gap-2 overflow-x-auto overflow-y-hidden">
+            {/* TIER 2: CATEGORY FILTER PILLS & RESET */}
+            <div className="px-4 py-2.5 border-b border-slate-200/70 bg-white flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 overflow-x-auto">
+              {/* Category Filter Chips */}
+              <div className="flex items-center gap-1.5 overflow-x-auto py-0.5">
                 {[
-                  {
-                    id: 'all',
-                    label: 'All Inquiries',
-                    count: totalCount,
-                    icon: LayoutGrid,
-                    color: 'text-indigo-600',
-                    activeBg: 'bg-indigo-50',
-                    badgeActive: 'bg-indigo-100 text-indigo-700'
-                  },
-                  {
-                    id: 'fashion',
-                    label: 'Fashion & Apparel',
-                    count: fashionCount,
-                    icon: Scissors,
-                    color: 'text-pink-600',
-                    activeBg: 'bg-pink-50',
-                    badgeActive: 'bg-pink-100 text-pink-700'
-                  },
-                  {
-                    id: 'jewelry',
-                    label: 'Jewelry & Silver',
-                    count: jewelryCount,
-                    icon: Crown,
-                    color: 'text-amber-600',
-                    activeBg: 'bg-amber-50',
-                    badgeActive: 'bg-amber-100 text-amber-700'
-                  },
-                  {
-                    id: 'home_decor',
-                    label: 'Home Decor & Living',
-                    count: homeDecorCount,
-                    icon: Armchair,
-                    color: 'text-emerald-600',
-                    activeBg: 'bg-emerald-50',
-                    badgeActive: 'bg-emerald-100 text-emerald-700'
-                  },
-                  {
-                    id: 'other',
-                    label: 'Artisan Crafts',
-                    count: otherCount,
-                    icon: Wand2,
-                    color: 'text-purple-600',
-                    activeBg: 'bg-purple-50',
-                    badgeActive: 'bg-purple-100 text-purple-700'
-                  },
+                  { id: 'all', label: 'All Categories', count: totalCount, icon: LayoutGrid },
+                  { id: 'fashion', label: 'Fashion & Apparel', count: fashionCount, icon: Scissors },
+                  { id: 'jewelry', label: 'Jewelry & Silver', count: jewelryCount, icon: Crown },
+                  { id: 'home_decor', label: 'Home Decor', count: homeDecorCount, icon: Armchair },
+                  { id: 'other', label: 'Custom Craft', count: otherCount, icon: Wand2 },
                 ].map((cat) => {
                   const Icon = cat.icon;
                   const isSelected = categoryFilter === cat.id;
@@ -757,22 +749,15 @@ export default function AdminDashboard() {
                     <button
                       key={cat.id}
                       onClick={() => setCategoryFilter(cat.id)}
-                      className={`group flex items-center gap-2.5 px-3.5 py-2 text-xs font-bold transition-all cursor-pointer whitespace-nowrap rounded-t-xl border-t border-x ${isSelected
-                          ? 'bg-white text-slate-900 border-slate-200 border-b-2 border-b-white shadow-2xs'
-                          : 'bg-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-200/50 border-transparent'
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${isSelected
+                        ? 'bg-slate-900 text-white font-bold shadow-2xs'
+                        : 'bg-slate-100/70 text-slate-600 hover:bg-slate-200/60 hover:text-slate-900'
                         }`}
                     >
-                      <div
-                        className={`w-6 h-6 rounded-lg flex items-center justify-center transition-colors ${isSelected ? cat.activeBg + ' ' + cat.color : 'bg-slate-200/70 text-slate-500 group-hover:bg-slate-200'
-                          }`}
-                      >
-                        <Icon className="w-3.5 h-3.5 stroke-[2.2]" />
-                      </div>
-                      <span className="tracking-tight">{cat.label}</span>
-                      <span
-                        className={`text-[10px] font-black px-2 py-0.5 rounded-full transition-colors ${isSelected ? cat.badgeActive : 'bg-slate-200/90 text-slate-700'
-                          }`}
-                      >
+                      <Icon className="w-3.5 h-3.5 shrink-0" />
+                      <span>{cat.label}</span>
+                      <span className={`text-[10px] font-black px-1.5 py-0.2 rounded-md ${isSelected ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-600'
+                        }`}>
                         {cat.count}
                       </span>
                     </button>
@@ -780,58 +765,19 @@ export default function AdminDashboard() {
                 })}
               </div>
 
-              {categoryFilter !== 'all' && (
+              {(dashboardTimeframe !== 'all' || categoryFilter !== 'all' || inquiryTypeFilter !== 'all' || searchQuery) && (
                 <button
-                  onClick={() => setCategoryFilter('all')}
-                  className="text-xs text-indigo-600 hover:text-indigo-800 font-bold shrink-0 pb-1 cursor-pointer"
+                  onClick={() => {
+                    setDashboardTimeframe('all');
+                    setCategoryFilter('all');
+                    setInquiryTypeFilter('all');
+                    setSearchQuery('');
+                  }}
+                  className="text-xs text-indigo-600 hover:text-indigo-800 font-bold cursor-pointer ml-1 underline decoration-indigo-200 underline-offset-2 shrink-0"
                 >
-                  ← Show All ({totalCount})
+                  Reset All Filters
                 </button>
               )}
-            </div>
-
-            {/* Header & Filter Bar */}
-            <div className="p-4 sm:p-5 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white">
-              <div className="flex items-center gap-3">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider shrink-0">Period:</span>
-                <select
-                  value={dashboardTimeframe}
-                  onChange={(e) => setDashboardTimeframe(e.target.value as any)}
-                  className="px-3 py-1.5 text-xs font-bold bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer shadow-2xs"
-                >
-                  <option value="all">All Time ({totalCount})</option>
-                  <option value="today">Today ({todayCount})</option>
-                  <option value="week">This Week ({thisWeekCount})</option>
-                  <option value="month">This Month ({thisMonthCount})</option>
-                </select>
-
-                {(dashboardTimeframe !== 'all' || categoryFilter !== 'all' || searchQuery) && (
-                  <button
-                    onClick={() => {
-                      setDashboardTimeframe('all');
-                      setCategoryFilter('all');
-                      setSearchQuery('');
-                    }}
-                    className="text-xs text-indigo-600 hover:text-indigo-800 font-bold cursor-pointer ml-1"
-                  >
-                    Reset Filters
-                  </button>
-                )}
-              </div>
-
-              <div className="flex items-center gap-3 w-full md:w-auto justify-end">
-                {/* Search */}
-                <div className="relative w-full sm:w-64">
-                  <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="text"
-                    placeholder="Search name, email, ID..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
-                  />
-                </div>
-              </div>
             </div>
 
             {/* Table Content */}
@@ -868,7 +814,8 @@ export default function AdminDashboard() {
                   </thead>
                   <tbody className="divide-y divide-slate-100 bg-white">
                     {displayedInquiries.map((inq) => {
-                      const primaryImg = inq.images?.[0] || 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=300&q=80';
+                      const hasImage = Boolean(inq.images && inq.images.length > 0 && inq.images[0]);
+                      const primaryImg = hasImage ? inq.images![0] : '';
                       const newToday = isToday(inq.createdAt);
                       return (
                         <tr key={inq._id || inq.inquiryNumber} className="hover:bg-slate-50/80 transition-colors">
@@ -907,20 +854,30 @@ export default function AdminDashboard() {
                           </td>
                           <td className="py-4 px-5">
                             <div className="flex items-center gap-3.5">
-                              <div
-                                onClick={() => setPreviewImageModal(primaryImg)}
-                                className="w-12 h-12 rounded-xl overflow-hidden border border-slate-200 shrink-0 cursor-pointer relative group bg-slate-100 shadow-2xs"
-                                title="Click to enlarge photo"
-                              >
-                                <img
-                                  src={primaryImg}
-                                  alt={inq.name}
-                                  className="w-full h-full object-cover group-hover:scale-110 transition-transform"
-                                />
-                                <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                                  <Eye className="w-4 h-4 text-white" />
+                              {hasImage ? (
+                                <div
+                                  onClick={() => setPreviewImageModal(primaryImg)}
+                                  className="w-12 h-12 rounded-xl overflow-hidden border border-slate-200 shrink-0 cursor-pointer relative group bg-slate-100 shadow-2xs"
+                                  title="Click to enlarge photo"
+                                >
+                                  <img
+                                    src={primaryImg}
+                                    alt={inq.name}
+                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform"
+                                  />
+                                  <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                    <Eye className="w-4 h-4 text-white" />
+                                  </div>
                                 </div>
-                              </div>
+                              ) : (
+                                <div
+                                  className="w-12 h-12 rounded-xl border border-dashed border-slate-200 shrink-0 flex flex-col items-center justify-center bg-slate-50 text-slate-400"
+                                  title="No photo attached"
+                                >
+                                  <ImageOff className="w-4 h-4 text-slate-300" />
+                                  <span className="text-[8px] font-bold text-slate-400 uppercase mt-0.5">None</span>
+                                </div>
+                              )}
                               <div className="min-w-0">
                                 <div className="flex items-center gap-2 flex-wrap">
                                   <p className="font-bold text-slate-900 text-sm leading-snug">{inq.name}</p>

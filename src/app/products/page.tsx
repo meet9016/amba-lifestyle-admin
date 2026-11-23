@@ -30,7 +30,16 @@ import {
   Info,
   Plus,
   Upload,
-  Edit3
+  Edit3,
+  X,
+  LayoutGrid,
+  Scissors,
+  Crown,
+  Armchair,
+  Wand2,
+  RefreshCw,
+  ShoppingBag,
+  Sparkles
 } from 'lucide-react';
 
 interface AdminProduct {
@@ -358,52 +367,57 @@ export default function AdminProductsPage() {
   };
 
   // Fetch all products and dynamic categories from backend
+  const [loading, setLoading] = useState(false);
+
+  const fetchAdminData = async () => {
+    setLoading(true);
+    // 1. Fetch products
+    try {
+      const res = await apiClient.get(`${API_ENDPOINTS.PRODUCTS.LIST}?limit=50&all=true`, {
+        headers: { 'x-user-role': 'admin' }
+      });
+      if (res.data?.data) {
+        const mapped = res.data.data.map((item: any) => ({
+          id: String(item._id),
+          title: item.title,
+          category: item.category,
+          subCategory: item.subCategory || 'Handcrafted Goods',
+          price: item.price,
+          discountPrice: item.discountPrice,
+          stock: item.stock,
+          vendorName: item.vendorName || 'Artisan Partner',
+          vendor: typeof item.vendor === 'object' ? item.vendor?._id || item.vendor?.name : String(item.vendor || ''),
+          status: item.status || 'approved',
+          approvalStatus: (item.approvalStatus === 'inactive' || item.status === 'inactive') ? 'inactive' : (item.approvalStatus || (item.status === 'pending_approval' ? 'pending' : 'approved')),
+          isActive: item.approvalStatus === 'approved' && item.status !== 'inactive',
+          rejectionReason: item.rejectionReason || '',
+          imageUrl: item.images?.[0] || 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=300&q=80',
+          images: Array.isArray(item.images) && item.images.length > 0
+            ? item.images
+            : ['https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=300&q=80'],
+          description: item.description || 'No description provided for this artisan product.',
+          specifications: item.specifications || {},
+          tierPricing: item.tierPricing || [],
+          rating: item.rating || 4.8,
+          numReviews: item.numReviews || 0,
+          createdAt: item.createdAt
+        }));
+        setProducts(mapped);
+      }
+    } catch (_) { }
+
+    // 2. Fetch dynamic categories
+    try {
+      const catRes = await apiClient.get(API_ENDPOINTS.CATEGORIES.LIST);
+      if (catRes.data?.data && catRes.data.data.length > 0) {
+        setCategories(catRes.data.data);
+      }
+    } catch (_) { } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchAdminData = async () => {
-      // 1. Fetch products
-      try {
-        const res = await apiClient.get(`${API_ENDPOINTS.PRODUCTS.LIST}?limit=50&all=true`, {
-          headers: { 'x-user-role': 'admin' }
-        });
-        if (res.data?.data) {
-          const mapped = res.data.data.map((item: any) => ({
-            id: String(item._id),
-            title: item.title,
-            category: item.category,
-            subCategory: item.subCategory || 'Handcrafted Goods',
-            price: item.price,
-            discountPrice: item.discountPrice,
-            stock: item.stock,
-            vendorName: item.vendorName || 'Artisan Partner',
-            vendor: typeof item.vendor === 'object' ? item.vendor?._id || item.vendor?.name : String(item.vendor || ''),
-            status: item.status || 'approved',
-            approvalStatus: (item.approvalStatus === 'inactive' || item.status === 'inactive') ? 'inactive' : (item.approvalStatus || (item.status === 'pending_approval' ? 'pending' : 'approved')),
-            isActive: item.approvalStatus === 'approved' && item.status !== 'inactive',
-            rejectionReason: item.rejectionReason || '',
-            imageUrl: item.images?.[0] || 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=300&q=80',
-            images: Array.isArray(item.images) && item.images.length > 0
-              ? item.images
-              : ['https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=300&q=80'],
-            description: item.description || 'No description provided for this artisan product.',
-            specifications: item.specifications || {},
-            tierPricing: item.tierPricing || [],
-            rating: item.rating || 4.8,
-            numReviews: item.numReviews || 0,
-            createdAt: item.createdAt
-          }));
-          setProducts(mapped);
-        }
-      } catch (_) { }
-
-      // 2. Fetch dynamic categories
-      try {
-        const catRes = await apiClient.get(API_ENDPOINTS.CATEGORIES.LIST);
-        if (catRes.data?.data && catRes.data.data.length > 0) {
-          setCategories(catRes.data.data);
-        }
-      } catch (_) { }
-    };
-
     fetchAdminData();
   }, []);
 
@@ -461,6 +475,16 @@ export default function AdminProductsPage() {
     setTimeout(() => setNotification(null), 4000);
   };
 
+  // Distinct categories dynamically from products and category list
+  const knownCategories = ['Fashion & Apparel', 'Jewelry & Silverware', 'Home Decor & Crafts', 'Other Custom Craft'];
+  const dynamicCategoryNames = Array.from(
+    new Set([
+      ...knownCategories,
+      ...categories.map(c => c.name),
+      ...products.map(p => p.category).filter(Boolean)
+    ])
+  );
+
   // Filter products
   const filteredProducts = products.filter((p) => {
     const isProdActive = p.approvalStatus === 'approved' && p.status !== 'inactive';
@@ -470,9 +494,12 @@ export default function AdminProductsPage() {
         : activeTab === 'active'
           ? isProdActive
           : !isProdActive;
+    const query = searchQuery.toLowerCase().trim();
     const matchesSearch =
-      p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.vendorName.toLowerCase().includes(searchQuery.toLowerCase());
+      !query ||
+      p.title.toLowerCase().includes(query) ||
+      p.vendorName.toLowerCase().includes(query) ||
+      p.id.toLowerCase().includes(query);
     const matchesCategory =
       selectedCategory === 'All' ? true : p.category === selectedCategory;
 
@@ -482,165 +509,409 @@ export default function AdminProductsPage() {
   const countActive = products.filter(p => p.approvalStatus === 'approved' && p.status !== 'inactive').length;
   const countInactive = products.filter(p => p.approvalStatus !== 'approved' || p.status === 'inactive').length;
 
+  const getCategoryCount = (catName: string) => {
+    if (catName === 'All') return products.length;
+    return products.filter(p => p.category === catName).length;
+  };
+
+  const getCategoryBadge = (category?: string) => {
+    const cat = (category || '').toLowerCase();
+    if (cat.includes('fashion') || cat.includes('apparel')) {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-pink-50 text-pink-700 border border-pink-200 shadow-2xs">
+          <Scissors className="w-3 h-3 text-pink-600 stroke-[2.2]" /> {category || 'Fashion'}
+        </span>
+      );
+    }
+    if (cat.includes('jewel') || cat.includes('silver')) {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200 shadow-2xs">
+          <Crown className="w-3 h-3 text-amber-600 stroke-[2.2]" /> {category || 'Jewelry'}
+        </span>
+      );
+    }
+    if (cat.includes('decor') || cat.includes('home')) {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 shadow-2xs">
+          <Armchair className="w-3 h-3 text-emerald-600 stroke-[2.2]" /> {category || 'Home Decor'}
+        </span>
+      );
+    }
+    return (
+      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-purple-50 text-purple-800 border border-purple-200 shadow-2xs">
+        <Wand2 className="w-3 h-3 text-purple-600 stroke-[2.2]" /> {category || 'Craft'}
+      </span>
+    );
+  };
+
   return (
-    <div className="flex min-h-screen bg-zinc-50 text-zinc-900">
+    <div className="flex min-h-screen bg-slate-50 text-slate-900 font-sans antialiased">
       <AdminSidebar />
 
       <div className="flex-1 flex flex-col min-w-0">
         <AdminHeader title="Platform Product Management" />
 
-        <main className="flex-1 p-8 space-y-6">
+        <main className="flex-1 p-6 lg:p-8 space-y-6 w-full">
+          {/* Header Bar */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                  All Products Directory
+                </h1>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  Catalog Live
+                </span>
+              </div>
+              <p className="text-xs sm:text-sm text-slate-500 mt-1">
+                Complete catalog across all vendors. Set products Active or Inactive, edit details, and inspect storefront publication.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
+              <button
+                type="button"
+                onClick={fetchAdminData}
+                className="px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-bold rounded-xl transition-all flex items-center gap-2 cursor-pointer shadow-2xs"
+                title="Refresh products list"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 text-slate-500 ${loading ? 'animate-spin' : ''}`} />
+                <span>Refresh</span>
+              </button>
+
+              <a
+                href="http://localhost:3000"
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 transition-all shadow-2xs"
+              >
+                <ExternalLink className="w-3.5 h-3.5 text-slate-500" />
+                <span>View Storefront</span>
+              </a>
+
+              <Button
+                onClick={() => setIsAddModalOpen(true)}
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-xs shadow-indigo-600/20 transition-all cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add New Product</span>
+              </Button>
+            </div>
+          </div>
+
+          {/* Notifications */}
           {notification && (
             <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-2xl flex items-center justify-between text-xs font-semibold shadow-xs">
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                 <span>{notification}</span>
               </div>
-              <button onClick={() => setNotification(null)}>✕</button>
+              <button onClick={() => setNotification(null)} className="text-slate-400 hover:text-slate-600 p-1 cursor-pointer">
+                <X className="w-4 h-4" />
+              </button>
             </div>
           )}
 
-          {/* Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <h1 className="text-2xl font-bold text-zinc-900">All Products Directory</h1>
-              <p className="text-xs text-zinc-500 mt-1">
-                Complete catalog across all vendors. Set products Active or Inactive, edit details, and inspect storefront publication.
-              </p>
+          {/* SLEEK 4 STAT TILES */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+            {/* Tile 1: Total Products */}
+            <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-xs hover:border-slate-300 transition-all flex items-center justify-between">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 border border-indigo-100/60">
+                  <Package className="w-5 h-5" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider truncate">Total Products</p>
+                  <h3 className="text-2xl font-black text-slate-900 leading-tight mt-0.5">{products.length}</h3>
+                </div>
+              </div>
+              <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-100 shrink-0">
+                In Catalog
+              </span>
             </div>
-            <div className="flex items-center gap-2.5">
-              <Button
-                onClick={() => setIsAddModalOpen(true)}
-                className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-sm transition-all cursor-pointer"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Add New Product</span>
-              </Button>
-              <a
-                href="http://localhost:3000"
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-1.5 px-3 py-2 bg-white border border-zinc-200 rounded-xl text-xs font-semibold text-zinc-700 hover:bg-zinc-100 transition-colors shadow-xs"
-              >
-                <ExternalLink className="w-3.5 h-3.5" /> View Storefront
-              </a>
+
+            {/* Tile 2: Active Storefront */}
+            <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-xs hover:border-slate-300 transition-all flex items-center justify-between">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-100/60">
+                  <CheckCircle2 className="w-5 h-5" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[11px] font-bold text-emerald-700 uppercase tracking-wider truncate">Active Storefront</p>
+                  <h3 className="text-2xl font-black text-emerald-700 leading-tight mt-0.5">{countActive}</h3>
+                </div>
+              </div>
+              <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 shrink-0">
+                Live Now
+              </span>
+            </div>
+
+            {/* Tile 3: Inactive / Hidden */}
+            <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-xs hover:border-slate-300 transition-all flex items-center justify-between">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center shrink-0 border border-slate-200/60">
+                  <XCircle className="w-5 h-5" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[11px] font-bold text-slate-600 uppercase tracking-wider truncate">Inactive / Hidden</p>
+                  <h3 className="text-2xl font-black text-slate-700 leading-tight mt-0.5">{countInactive}</h3>
+                </div>
+              </div>
+              <span className="text-[10px] font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200 shrink-0">
+                Catalog Draft
+              </span>
+            </div>
+
+            {/* Tile 4: Active Categories */}
+            <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-xs hover:border-slate-300 transition-all flex items-center justify-between">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0 border border-purple-100/60">
+                  <Layers className="w-5 h-5" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[11px] font-bold text-purple-700 uppercase tracking-wider truncate">Categories</p>
+                  <h3 className="text-2xl font-black text-purple-700 leading-tight mt-0.5">{dynamicCategoryNames.length}</h3>
+                </div>
+              </div>
+              <span className="text-[10px] font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-md border border-purple-200 shrink-0">
+                Active Segments
+              </span>
             </div>
           </div>
 
-          {/* Filter Bar */}
-          <Card className="bg-white p-4 space-y-4">
-            {/* Status Tabs */}
-            <div className="flex border-b border-zinc-100 overflow-x-auto gap-2">
-              <button
-                onClick={() => setActiveTab('all')}
-                className={`pb-3 px-3 text-xs font-bold border-b-2 transition-all ${activeTab === 'all'
-                  ? 'border-indigo-600 text-indigo-700'
-                  : 'border-transparent text-zinc-500 hover:text-zinc-800'
+          {/* MAIN PRODUCTS CONTAINER WITH PROFESSIONAL CONTROL CENTER */}
+          <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
+            {/* ONE-LINE CONTROL CENTER: STATUS PILLS, SEARCH INPUT, & CATEGORY DROPDOWN */}
+            <div className="p-3.5 border-b border-slate-200/80 bg-slate-50/60 flex flex-row items-center justify-between gap-3 overflow-x-auto flex-nowrap">
+              {/* Segmented Status Pill Control */}
+              <div className="inline-flex items-center p-1 bg-slate-200/70 rounded-xl gap-1 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('all')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer whitespace-nowrap ${
+                    activeTab === 'all'
+                      ? 'bg-white text-slate-900 shadow-xs font-black ring-1 ring-black/5'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-white/40'
                   }`}
-              >
-                All Products ({products.length})
-              </button>
-              <button
-                onClick={() => setActiveTab('active')}
-                className={`pb-3 px-3 text-xs font-bold border-b-2 transition-all flex items-center gap-1.5 ${activeTab === 'active'
-                  ? 'border-emerald-600 text-emerald-700'
-                  : 'border-transparent text-zinc-500 hover:text-zinc-800'
-                  }`}
-              >
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                Active ({countActive})
-              </button>
-              <button
-                onClick={() => setActiveTab('inactive')}
-                className={`pb-3 px-3 text-xs font-bold border-b-2 transition-all flex items-center gap-1.5 ${activeTab === 'inactive'
-                  ? 'border-zinc-700 text-zinc-900'
-                  : 'border-transparent text-zinc-500 hover:text-zinc-800'
-                  }`}
-              >
-                <XCircle className="w-3.5 h-3.5 text-zinc-400" />
-                Inactive ({countInactive})
-              </button>
-            </div>
+                >
+                  <Package className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>All Products</span>
+                  <span className={`text-[10px] font-black px-1.5 py-0.2 rounded-md ${
+                    activeTab === 'all' ? 'bg-indigo-50 text-indigo-700' : 'bg-slate-300/60 text-slate-600'
+                  }`}>
+                    {products.length}
+                  </span>
+                </button>
 
-            {/* Search and Common Select Filter */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
-              <div className="relative sm:col-span-2">
-                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
-                <input
-                  type="text"
-                  placeholder="Search by product title or vendor name..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 text-xs bg-zinc-50 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-zinc-800"
-                />
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('active')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer whitespace-nowrap ${
+                    activeTab === 'active'
+                      ? 'bg-white text-emerald-950 shadow-xs font-black ring-1 ring-black/5'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-white/40'
+                  }`}
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Active</span>
+                  <span className={`text-[10px] font-black px-1.5 py-0.2 rounded-md ${
+                    activeTab === 'active' ? 'bg-emerald-100 text-emerald-900' : 'bg-slate-300/60 text-slate-600'
+                  }`}>
+                    {countActive}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('inactive')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer whitespace-nowrap ${
+                    activeTab === 'inactive'
+                      ? 'bg-white text-slate-900 shadow-xs font-black ring-1 ring-black/5'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-white/40'
+                  }`}
+                >
+                  <XCircle className="w-3.5 h-3.5 text-slate-500" />
+                  <span>Inactive</span>
+                  <span className={`text-[10px] font-black px-1.5 py-0.2 rounded-md ${
+                    activeTab === 'inactive' ? 'bg-slate-200 text-slate-800' : 'bg-slate-300/60 text-slate-600'
+                  }`}>
+                    {countInactive}
+                  </span>
+                </button>
               </div>
 
-              {/* Common Select Component */}
-              <Select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                options={[
-                  { value: 'All', label: 'All Categories' },
-                  ...categories.map(c => ({ value: c.name, label: c.name }))
-                ]}
-                focusRingColor="focus:ring-indigo-500"
-                className="py-1.5 text-xs"
-              />
-            </div>
-          </Card>
+              {/* Right Side: Search Bar & Category Dropdown */}
+              <div className="flex items-center gap-2.5 flex-1 max-w-xl justify-end min-w-0">
+                {/* Search Bar with clear button */}
+                <div className="relative flex-1 min-w-[180px]">
+                  <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    placeholder="Search by title, vendor, or ID..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-9 pr-7 py-2 text-xs bg-white border border-slate-200/90 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 shadow-2xs font-medium text-slate-800 placeholder:text-slate-400 transition-all"
+                  />
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery('')}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
 
-          {/* All Products Table */}
-          <Card className="bg-white">
+                {/* Category Dropdown */}
+                <div className="relative shrink-0 w-44 sm:w-48">
+                  <select
+                    value={selectedCategory}
+                    onChange={(e) => setSelectedCategory(e.target.value)}
+                    className="w-full h-9 pl-3 pr-8 text-xs font-semibold bg-white border border-slate-200/90 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 shadow-2xs text-slate-800 cursor-pointer appearance-none truncate"
+                  >
+                    <option value="All">All Categories ({products.length})</option>
+                    {dynamicCategoryNames.map((catName) => (
+                      <option key={catName} value={catName}>
+                        {catName} ({getCategoryCount(catName)})
+                      </option>
+                    ))}
+                  </select>
+                  <Filter className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                </div>
+
+                {/* Reset Filters button */}
+                {(selectedCategory !== 'All' || searchQuery !== '' || activeTab !== 'all') && (
+                  <button
+                    onClick={() => {
+                      setSelectedCategory('All');
+                      setSearchQuery('');
+                      setActiveTab('all');
+                    }}
+                    className="text-xs font-bold text-rose-600 hover:text-rose-700 shrink-0 px-2.5 py-1.5 rounded-xl hover:bg-rose-50 transition-colors cursor-pointer"
+                    title="Reset all filters"
+                  >
+                    Reset
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* PRODUCTS DATA TABLE */}
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead>
-                  <tr className="border-b border-zinc-200 text-xs font-semibold text-zinc-500">
-                    <th className="pb-3">Product</th>
-                    <th className="pb-3">Vendor</th>
-                    <th className="pb-3">Category</th>
-                    <th className="pb-3">Price</th>
-                    <th className="pb-3">Status</th>
-                    <th className="pb-3 text-right">Actions</th>
+                  <tr className="border-b border-slate-200 bg-slate-50/80 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                    <th className="py-3 px-4">Product Details</th>
+                    <th className="py-3 px-4">Artisan / Vendor</th>
+                    <th className="py-3 px-4">Category</th>
+                    <th className="py-3 px-4">Price</th>
+                    <th className="py-3 px-4">Storefront Status</th>
+                    <th className="py-3 px-4 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-100">
+                <tbody className="divide-y divide-slate-100">
                   {filteredProducts.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="py-10 text-center text-xs text-zinc-400">
-                        No products found matching criteria.
+                      <td colSpan={6} className="py-16 text-center">
+                        <div className="max-w-sm mx-auto space-y-3">
+                          <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
+                            <Package className="w-6 h-6" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold text-slate-800">No products found</p>
+                            <p className="text-xs text-slate-400 mt-1">
+                              Try clearing your search query or selecting a different status/category filter.
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => {
+                              setSelectedCategory('All');
+                              setSearchQuery('');
+                              setActiveTab('all');
+                            }}
+                            className="px-3.5 py-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors cursor-pointer"
+                          >
+                            Reset All Filters
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ) : (
                     filteredProducts.map((p) => (
-                      <tr key={p.id} className="text-zinc-700 hover:bg-zinc-50/50">
-                        <td className="py-3.5">
+                      <tr key={p.id} className="text-slate-700 hover:bg-slate-50/70 transition-colors">
+                        {/* 1. Product Thumbnail & Info */}
+                        <td className="py-3.5 px-4">
                           <div
                             onClick={() => handleOpenDetails(p)}
                             className="flex items-center gap-3 cursor-pointer group"
-                            title="Click to view complete product details"
+                            title="Click to inspect full details and specifications"
                           >
-                            <img
-                              src={p.imageUrl}
-                              alt={p.title}
-                              className="w-12 h-14 object-cover rounded-xl bg-zinc-100 border border-zinc-200 shrink-0 group-hover:scale-105 transition-transform"
-                            />
-                            <div className="max-w-xs">
-                              <p className="font-semibold text-zinc-900 text-xs line-clamp-1 group-hover:text-indigo-600 transition-colors">
+                            <div className="relative w-12 h-14 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 shrink-0 shadow-2xs">
+                              <img
+                                src={p.imageUrl}
+                                alt={p.title}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                              />
+                            </div>
+                            <div className="max-w-xs min-w-0">
+                              <p className="font-bold text-slate-900 text-xs line-clamp-1 group-hover:text-indigo-600 transition-colors">
                                 {p.title}
                               </p>
-                              <p className="text-[10px] text-zinc-400 mt-0.5">ID: {p.id}</p>
+                              <div className="flex items-center gap-1.5 mt-0.5">
+                                <span className="font-mono text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200/60">
+                                  ID: {p.id.slice(-6)}
+                                </span>
+                                {p.stock !== undefined && (
+                                  <span className="text-[10px] text-slate-500 font-medium">
+                                    • {p.stock} in stock
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </td>
-                        <td className="py-3 text-xs font-medium text-zinc-800">{p.vendorName}</td>
-                        <td className="py-3 text-xs text-zinc-500">
-                          <div>{p.category}</div>
-                          {p.subCategory && (
-                            <span className="text-[10px] text-zinc-400">{p.subCategory}</span>
+
+                        {/* 2. Vendor */}
+                        <td className="py-3 px-4">
+                          <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-800">
+                            <Store className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                            <span className="truncate max-w-[140px]">{p.vendorName}</span>
+                          </div>
+                          {p.rating && (
+                            <div className="flex items-center gap-1 mt-0.5">
+                              <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                              <span className="text-[11px] font-bold text-slate-600">
+                                {p.rating.toFixed(1)}
+                              </span>
+                            </div>
                           )}
                         </td>
-                        <td className="py-3 font-semibold text-zinc-900">₹{p.price.toLocaleString()}</td>
-                        <td className="py-3">
+
+                        {/* 3. Category */}
+                        <td className="py-3 px-4">
+                          {getCategoryBadge(p.category)}
+                          {p.subCategory && (
+                            <div className="text-[10px] font-medium text-slate-400 mt-1 truncate max-w-[140px]">
+                              {p.subCategory}
+                            </div>
+                          )}
+                        </td>
+
+                        {/* 4. Price */}
+                        <td className="py-3 px-4">
+                          <div className="font-mono font-black text-slate-900 text-sm">
+                            ₹{p.price.toLocaleString()}
+                          </div>
+                          {p.discountPrice && p.discountPrice > p.price && (
+                            <div className="text-[10px] font-mono text-slate-400 line-through">
+                              ₹{p.discountPrice.toLocaleString()}
+                            </div>
+                          )}
+                        </td>
+
+                        {/* 5. Status Toggle */}
+                        <td className="py-3 px-4">
                           {p.approvalStatus === 'approved' && p.status !== 'inactive' ? (
                             <button
                               onClick={() => handleToggleProductStatus(p)}
@@ -653,44 +924,43 @@ export default function AdminProductsPage() {
                           ) : (
                             <button
                               onClick={() => handleToggleProductStatus(p)}
-                              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-zinc-100 text-zinc-600 border border-zinc-200 hover:bg-zinc-200/80 hover:border-zinc-300 transition-all cursor-pointer shadow-2xs group"
+                              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200 hover:bg-slate-200/80 hover:border-slate-300 transition-all cursor-pointer shadow-2xs group"
                               title="Inactive / Hidden. Click to set Active"
                             >
-                              <span className="w-2 h-2 rounded-full bg-zinc-400" />
+                              <span className="w-2 h-2 rounded-full bg-slate-400" />
                               <span>Inactive</span>
                             </button>
                           )}
                         </td>
-                        <td className="py-3 text-right">
+
+                        {/* 6. Actions */}
+                        <td className="py-3 px-4 text-right">
                           <div className="inline-flex items-center gap-1.5 justify-end">
                             {/* 1. Edit Button */}
                             <button
                               onClick={() => handleOpenEdit(p)}
-                              className="inline-flex items-center gap-1.5 h-8 px-3 text-xs border border-indigo-200 bg-indigo-50/60 text-indigo-700 hover:bg-indigo-100 rounded-xl font-bold transition-all shadow-2xs active:scale-[0.98] cursor-pointer"
+                              className="inline-flex items-center justify-center w-8 h-8 rounded-xl border border-indigo-200 bg-indigo-50/70 text-indigo-700 hover:bg-indigo-100 hover:border-indigo-300 transition-all shadow-2xs active:scale-95 cursor-pointer"
                               title="Edit Product (Image, Name, Price)"
                             >
                               <Edit3 className="w-3.5 h-3.5" />
-                          
                             </button>
 
-                            {/* 2. View Button */}
+                            {/* 2. View Details Button */}
                             <button
                               onClick={() => handleOpenDetails(p)}
-                              className="inline-flex items-center gap-1.5 h-8 px-3 text-xs border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50 hover:border-zinc-300 rounded-xl font-bold transition-all shadow-2xs active:scale-[0.98] cursor-pointer"
-                              title="View Product Details"
+                              className="inline-flex items-center justify-center w-8 h-8 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 hover:border-slate-300 transition-all shadow-2xs active:scale-95 cursor-pointer"
+                              title="View Product Inspection & Details"
                             >
-                              <Eye className="w-3.5 h-3.5 text-zinc-500" />
-                      
+                              <Eye className="w-3.5 h-3.5 text-slate-600" />
                             </button>
 
                             {/* 3. Delete Button */}
                             <button
                               onClick={() => handleOpenDeleteModal(p)}
-                              className="inline-flex items-center gap-1.5 h-8 px-3 text-xs border border-rose-200 bg-rose-50/60 text-rose-700 hover:bg-rose-100 rounded-xl font-bold transition-all shadow-2xs active:scale-[0.98] cursor-pointer"
+                              className="inline-flex items-center justify-center w-8 h-8 rounded-xl border border-rose-200 bg-rose-50/70 text-rose-700 hover:bg-rose-100 hover:border-rose-300 transition-all shadow-2xs active:scale-95 cursor-pointer"
                               title="Delete Product"
                             >
                               <Trash2 className="w-3.5 h-3.5 text-rose-600" />
-                          
                             </button>
                           </div>
                         </td>
@@ -700,7 +970,7 @@ export default function AdminProductsPage() {
                 </tbody>
               </table>
             </div>
-          </Card>
+          </div>
         </main>
       </div>
 
