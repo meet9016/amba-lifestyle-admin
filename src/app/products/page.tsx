@@ -39,7 +39,10 @@ import {
   Wand2,
   RefreshCw,
   ShoppingBag,
-  Sparkles
+  Sparkles,
+  ChevronLeft,
+  ChevronRight,
+  ChevronDown
 } from 'lucide-react';
 
 interface AdminProduct {
@@ -51,6 +54,7 @@ interface AdminProduct {
   discountPrice?: number;
   stock?: number;
   vendorName: string;
+  companyName?: string;
   vendor?: string;
   status?: string;
   approvalStatus: 'approved' | 'pending' | 'rejected' | 'inactive';
@@ -74,6 +78,18 @@ export default function AdminProductsPage() {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [notification, setNotification] = useState<string | null>(null);
 
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalProducts, setTotalProducts] = useState(0);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [backendStats, setBackendStats] = useState<{
+    total: number;
+    active: number;
+    inactive: number;
+  } | null>(null);
+  const [backendCompanies, setBackendCompanies] = useState<string[]>([]);
+
   // Product Inspection Detail Modal States
   const [selectedProduct, setSelectedProduct] = useState<AdminProduct | null>(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
@@ -89,10 +105,16 @@ export default function AdminProductsPage() {
   const [productToDelete, setProductToDelete] = useState<AdminProduct | null>(null);
   const [isDeletingProduct, setIsDeletingProduct] = useState(false);
 
+  // Custom companies dynamically added by user
+  const [customCompanies, setCustomCompanies] = useState<string[]>([]);
+
   // Add Product Modal States
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newPrice, setNewPrice] = useState('');
+  const [newCompanyName, setNewCompanyName] = useState('');
+  const [isAddingCompanyInAdd, setIsAddingCompanyInAdd] = useState(false);
+  const [companyInputAdd, setCompanyInputAdd] = useState('');
   const [newCategory, setNewCategory] = useState('Fashion & Apparel');
   const [newImageUrl, setNewImageUrl] = useState('');
   const [isSubmittingNewProduct, setIsSubmittingNewProduct] = useState(false);
@@ -102,6 +124,9 @@ export default function AdminProductsPage() {
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [editPrice, setEditPrice] = useState('');
+  const [editCompanyName, setEditCompanyName] = useState('');
+  const [isAddingCompanyInEdit, setIsAddingCompanyInEdit] = useState(false);
+  const [companyInputEdit, setCompanyInputEdit] = useState('');
   const [editCategory, setEditCategory] = useState('Fashion & Apparel');
   const [editImageUrl, setEditImageUrl] = useState('');
   const [isSubmittingEdit, setIsSubmittingEdit] = useState(false);
@@ -195,6 +220,7 @@ export default function AdminProductsPage() {
       return;
     }
     const finalImg = newImageUrl.trim() || 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=600&q=80';
+    const finalCompany = newCompanyName.trim();
 
     setIsSubmittingNewProduct(true);
     try {
@@ -203,6 +229,8 @@ export default function AdminProductsPage() {
         name: newTitle.trim(),
         price: Number(newPrice),
         category: newCategory,
+        companyName: finalCompany,
+        vendorName: finalCompany,
         images: [finalImg],
         imageUrl: finalImg
       };
@@ -221,7 +249,8 @@ export default function AdminProductsPage() {
           price: created.price,
           discountPrice: created.discountPrice,
           stock: created.stock || 10,
-          vendorName: created.vendorName || 'Amba Lifestyle Direct',
+          vendorName: created.companyName || created.vendorName || finalCompany,
+          companyName: created.companyName || created.vendorName || finalCompany,
           approvalStatus: 'approved',
           status: 'approved',
           isActive: true,
@@ -233,10 +262,14 @@ export default function AdminProductsPage() {
         setProducts(prev => [mappedProduct, ...prev]);
         setNotification(`Product "${newTitle}" added successfully! Now visible on the frontend.`);
         setTimeout(() => setNotification(null), 5000);
+        fetchAdminData();
       }
       setIsAddModalOpen(false);
       setNewTitle('');
       setNewPrice('');
+      setNewCompanyName('');
+      setIsAddingCompanyInAdd(false);
+      setCompanyInputAdd('');
       setNewImageUrl('');
     } catch (err: any) {
       alert(err.response?.data?.message || 'Failed to create product');
@@ -292,6 +325,9 @@ export default function AdminProductsPage() {
     setEditTitle(p.title);
     setEditPrice(String(p.price));
     setEditCategory(p.category || 'Fashion & Apparel');
+    setEditCompanyName(p.companyName || p.vendorName || '');
+    setIsAddingCompanyInEdit(false);
+    setCompanyInputEdit('');
     setEditImageUrl(p.imageUrl || p.images?.[0] || '');
     setIsEditModalOpen(true);
   };
@@ -311,11 +347,14 @@ export default function AdminProductsPage() {
     setIsSubmittingEdit(true);
     try {
       const finalImg = editImageUrl.trim() || 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=600&q=80';
+      const finalCompany = editCompanyName.trim();
       const payload = {
         title: editTitle.trim(),
         name: editTitle.trim(),
         price: Number(editPrice),
         category: editCategory,
+        companyName: finalCompany,
+        vendorName: finalCompany,
         images: [finalImg],
         imageUrl: finalImg
       };
@@ -327,7 +366,16 @@ export default function AdminProductsPage() {
       setProducts(prev =>
         prev.map(item =>
           item.id === editingProductId
-            ? { ...item, title: editTitle.trim(), price: Number(editPrice), category: editCategory, imageUrl: finalImg, images: [finalImg] }
+            ? {
+                ...item,
+                title: editTitle.trim(),
+                price: Number(editPrice),
+                category: editCategory,
+                companyName: finalCompany,
+                vendorName: finalCompany,
+                imageUrl: finalImg,
+                images: [finalImg]
+              }
             : item
         )
       );
@@ -335,6 +383,9 @@ export default function AdminProductsPage() {
       setNotification(`Product "${editTitle}" updated successfully.`);
       setTimeout(() => setNotification(null), 4000);
       setIsEditModalOpen(false);
+      setIsAddingCompanyInEdit(false);
+      setCompanyInputEdit('');
+      fetchAdminData();
     } catch (err: any) {
       alert(err.response?.data?.message || 'Failed to update product');
     } finally {
@@ -359,6 +410,7 @@ export default function AdminProductsPage() {
       setTimeout(() => setNotification(null), 4000);
       setIsDeleteModalOpen(false);
       setProductToDelete(null);
+      fetchAdminData();
     } catch (err: any) {
       alert(err.response?.data?.message || 'Failed to delete product');
     } finally {
@@ -369,11 +421,27 @@ export default function AdminProductsPage() {
   // Fetch all products and dynamic categories from backend
   const [loading, setLoading] = useState(false);
 
-  const fetchAdminData = async () => {
+  const fetchAdminData = async (targetPage?: number, targetLimit?: number) => {
     setLoading(true);
+    const p = targetPage !== undefined ? targetPage : currentPage;
+    const l = targetLimit !== undefined ? targetLimit : itemsPerPage;
     // 1. Fetch products
     try {
-      const res = await apiClient.get(`${API_ENDPOINTS.PRODUCTS.LIST}?limit=50&all=true`, {
+      const queryParams = new URLSearchParams();
+      queryParams.set('page', String(p));
+      queryParams.set('limit', String(l));
+      queryParams.set('all', 'true');
+      if (activeTab !== 'all') {
+        queryParams.set('status', activeTab);
+      }
+      if (selectedCategory !== 'All') {
+        queryParams.set('category', selectedCategory);
+      }
+      if (searchQuery.trim()) {
+        queryParams.set('search', searchQuery.trim());
+      }
+
+      const res = await apiClient.get(`${API_ENDPOINTS.PRODUCTS.LIST}?${queryParams.toString()}`, {
         headers: { 'x-user-role': 'admin' }
       });
       if (res.data?.data) {
@@ -385,7 +453,8 @@ export default function AdminProductsPage() {
           price: item.price,
           discountPrice: item.discountPrice,
           stock: item.stock,
-          vendorName: item.vendorName || 'Artisan Partner',
+          vendorName: item.companyName || item.vendorName || 'Amba Lifestyle Direct',
+          companyName: item.companyName || item.vendorName || 'Amba Lifestyle Direct',
           vendor: typeof item.vendor === 'object' ? item.vendor?._id || item.vendor?.name : String(item.vendor || ''),
           status: item.status || 'approved',
           approvalStatus: (item.approvalStatus === 'inactive' || item.status === 'inactive') ? 'inactive' : (item.approvalStatus || (item.status === 'pending_approval' ? 'pending' : 'approved')),
@@ -404,6 +473,17 @@ export default function AdminProductsPage() {
         }));
         setProducts(mapped);
       }
+      if (res.data?.companies) {
+        setBackendCompanies(res.data.companies);
+      }
+      if (res.data?.pagination) {
+        setTotalPages(res.data.pagination.totalPages || 1);
+        setTotalProducts(res.data.pagination.total || 0);
+        setCurrentPage(res.data.pagination.page || 1);
+      }
+      if (res.data?.stats) {
+        setBackendStats(res.data.stats);
+      }
     } catch (_) { }
 
     // 2. Fetch dynamic categories
@@ -418,8 +498,37 @@ export default function AdminProductsPage() {
   };
 
   useEffect(() => {
-    fetchAdminData();
-  }, []);
+    fetchAdminData(1);
+  }, [activeTab, selectedCategory, itemsPerPage]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchAdminData(1);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage < 1 || newPage > totalPages || newPage === currentPage) return;
+    setCurrentPage(newPage);
+    fetchAdminData(newPage);
+  };
+
+  const getPageNumbers = () => {
+    const pages: (number | string)[] = [];
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      if (currentPage <= 4) {
+        pages.push(1, 2, 3, 4, 5, '...', totalPages);
+      } else if (currentPage >= totalPages - 3) {
+        pages.push(1, '...', totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
+      } else {
+        pages.push(1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages);
+      }
+    }
+    return pages;
+  };
 
   const handleOpenDetails = (p: AdminProduct) => {
     setSelectedProduct(p);
@@ -485,32 +594,26 @@ export default function AdminProductsPage() {
     ])
   );
 
-  // Filter products
-  const filteredProducts = products.filter((p) => {
-    const isProdActive = p.approvalStatus === 'approved' && p.status !== 'inactive';
-    const matchesTab =
-      activeTab === 'all'
-        ? true
-        : activeTab === 'active'
-          ? isProdActive
-          : !isProdActive;
-    const query = searchQuery.toLowerCase().trim();
-    const matchesSearch =
-      !query ||
-      p.title.toLowerCase().includes(query) ||
-      p.vendorName.toLowerCase().includes(query) ||
-      p.id.toLowerCase().includes(query);
-    const matchesCategory =
-      selectedCategory === 'All' ? true : p.category === selectedCategory;
+  // Distinct companies dynamically from backend, user additions, and existing products
+  const companyNames = Array.from(
+    new Set([
+      ...(backendCompanies || []),
+      ...customCompanies,
+      ...products.map(p => (p.companyName || p.vendorName || '').trim()).filter(Boolean),
+      ...(newCompanyName ? [newCompanyName.trim()] : []),
+      ...(editCompanyName ? [editCompanyName.trim()] : [])
+    ])
+  ).filter(Boolean);
 
-    return matchesTab && matchesSearch && matchesCategory;
-  });
+  // Filter products: backend already handles search, category, status and returns the current page
+  const filteredProducts = products;
 
-  const countActive = products.filter(p => p.approvalStatus === 'approved' && p.status !== 'inactive').length;
-  const countInactive = products.filter(p => p.approvalStatus !== 'approved' || p.status === 'inactive').length;
+  const countTotal = backendStats ? backendStats.total : totalProducts;
+  const countActive = backendStats ? backendStats.active : products.filter(p => p.approvalStatus === 'approved' && p.status !== 'inactive').length;
+  const countInactive = backendStats ? backendStats.inactive : products.filter(p => p.approvalStatus !== 'approved' || p.status === 'inactive').length;
 
   const getCategoryCount = (catName: string) => {
-    if (catName === 'All') return products.length;
+    if (catName === 'All') return countTotal;
     return products.filter(p => p.category === catName).length;
   };
 
@@ -572,7 +675,7 @@ export default function AdminProductsPage() {
             <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
               <button
                 type="button"
-                onClick={fetchAdminData}
+                onClick={() => fetchAdminData()}
                 className="px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-bold rounded-xl transition-all flex items-center gap-2 cursor-pointer shadow-2xs"
                 title="Refresh products list"
               >
@@ -623,7 +726,7 @@ export default function AdminProductsPage() {
                 </div>
                 <div className="min-w-0">
                   <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider truncate">Total Products</p>
-                  <h3 className="text-2xl font-black text-slate-900 leading-tight mt-0.5">{products.length}</h3>
+                  <h3 className="text-2xl font-black text-slate-900 leading-tight mt-0.5">{countTotal}</h3>
                 </div>
               </div>
               <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-100 shrink-0">
@@ -700,7 +803,7 @@ export default function AdminProductsPage() {
                   <span className={`text-[10px] font-black px-1.5 py-0.2 rounded-md ${
                     activeTab === 'all' ? 'bg-indigo-50 text-indigo-700' : 'bg-slate-300/60 text-slate-600'
                   }`}>
-                    {products.length}
+                    {countTotal}
                   </span>
                 </button>
 
@@ -770,7 +873,7 @@ export default function AdminProductsPage() {
                     onChange={(e) => setSelectedCategory(e.target.value)}
                     className="w-full h-9 pl-3 pr-8 text-xs font-semibold bg-white border border-slate-200/90 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 shadow-2xs text-slate-800 cursor-pointer appearance-none truncate"
                   >
-                    <option value="All">All Categories ({products.length})</option>
+                    <option value="All">All Categories ({countTotal})</option>
                     {dynamicCategoryNames.map((catName) => (
                       <option key={catName} value={catName}>
                         {catName} ({getCategoryCount(catName)})
@@ -969,6 +1072,98 @@ export default function AdminProductsPage() {
                   )}
                 </tbody>
               </table>
+            </div>
+
+            {/* PROPER MODERN BACKEND PAGINATION BAR */}
+            <div className="p-3 sm:px-5 border-t border-slate-200/90 bg-slate-50/70 flex flex-col md:flex-row items-center justify-between gap-3 text-xs">
+              {/* Left: Summary text & Rows Per Page Dropdown */}
+              <div className="flex flex-wrap items-center gap-3 text-slate-600">
+                <span className="text-slate-500 text-xs">
+                  Showing <strong className="font-bold text-slate-900">{totalProducts > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0}</strong> to{' '}
+                  <strong className="font-bold text-slate-900">{Math.min(currentPage * itemsPerPage, totalProducts)}</strong> of{' '}
+                  <strong className="font-bold text-slate-900">{totalProducts}</strong> products
+                </span>
+
+                <div className="h-3.5 w-px bg-slate-300 hidden sm:block" />
+
+                {/* 10, 20, 50 Rows Per Page Proper Dropdown */}
+                <div className="flex items-center gap-1.5">
+                  <span className="text-slate-500 font-medium text-xs">Rows per page:</span>
+                  <div className="relative inline-flex items-center">
+                    <select
+                      value={itemsPerPage}
+                      onChange={(e) => {
+                        const newLimit = Number(e.target.value);
+                        setItemsPerPage(newLimit);
+                        setCurrentPage(1);
+                        fetchAdminData(1, newLimit);
+                      }}
+                      className="w-14 appearance-none bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 rounded-lg pl-2 pr-5 py-1 text-xs font-bold transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 cursor-pointer shadow-2xs"
+                    >
+                      <option value={10}>10</option>
+                      <option value={20}>20</option>
+                      <option value={50}>50</option>
+                    </select>
+                    <ChevronDown className="w-3 h-3 text-slate-400 absolute right-1.5 pointer-events-none" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Right: Page Navigation Buttons */}
+              <div className="flex items-center gap-3">
+                <span className="text-slate-500 text-xs hidden sm:inline">
+                  Page <strong className="font-bold text-slate-900">{currentPage}</strong> of{' '}
+                  <strong className="font-bold text-slate-900">{totalPages}</strong>
+                </span>
+
+                <div className="inline-flex items-center p-1 bg-white rounded-xl border border-slate-200 shadow-2xs gap-1">
+                  <button
+                    type="button"
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage <= 1 || loading}
+                    className="px-2.5 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-indigo-600 disabled:opacity-40 disabled:cursor-not-allowed font-bold text-xs transition-all flex items-center gap-1 cursor-pointer"
+                    title="Previous page"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                    <span className="hidden sm:inline">Prev</span>
+                  </button>
+
+                  <div className="flex items-center gap-1 px-1">
+                    {getPageNumbers().map((p, idx) => (
+                      typeof p === 'number' ? (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => handlePageChange(p)}
+                          disabled={loading}
+                          className={`min-w-8 h-8 rounded-lg text-xs font-black transition-all cursor-pointer ${
+                            currentPage === p
+                              ? 'bg-indigo-600 text-white shadow-xs'
+                              : 'text-slate-600 hover:bg-slate-100'
+                          }`}
+                        >
+                          {p}
+                        </button>
+                      ) : (
+                        <span key={idx} className="px-1 text-slate-400 font-bold">
+                          {p}
+                        </span>
+                      )
+                    ))}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage >= totalPages || loading}
+                    className="px-2.5 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-indigo-600 disabled:opacity-40 disabled:cursor-not-allowed font-bold text-xs transition-all flex items-center gap-1 cursor-pointer"
+                    title="Next page"
+                  >
+                    <span className="hidden sm:inline">Next</span>
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </main>
@@ -1391,6 +1586,114 @@ export default function AdminProductsPage() {
             />
           </div>
 
+          {/* Company Name with Dropdown & "+ Add" button */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-zinc-800 uppercase tracking-wider">
+                Company Name
+              </label>
+              {!isAddingCompanyInAdd && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsAddingCompanyInAdd(true);
+                    setCompanyInputAdd('');
+                  }}
+                  className="text-xs font-bold text-indigo-600 hover:text-indigo-800 cursor-pointer inline-flex items-center gap-1 hover:underline"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Add Company</span>
+                </button>
+              )}
+            </div>
+
+            {isAddingCompanyInAdd ? (
+              <div className="space-y-1 bg-indigo-50/50 p-2.5 rounded-xl border border-indigo-200">
+                <span className="text-[11px] font-bold text-indigo-900 block">
+                  Add New Company to Dropdown:
+                </span>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    autoFocus
+                    placeholder="Enter company name..."
+                    value={companyInputAdd}
+                    onChange={(e) => setCompanyInputAdd(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if (companyInputAdd.trim()) {
+                          const val = companyInputAdd.trim();
+                          setCustomCompanies(prev => Array.from(new Set([...prev, val])));
+                          setNewCompanyName(val);
+                          setCompanyInputAdd('');
+                          setIsAddingCompanyInAdd(false);
+                        }
+                      }
+                    }}
+                    className="flex-1 px-3 py-2 text-xs bg-white border border-indigo-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium text-zinc-900"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (companyInputAdd.trim()) {
+                        const val = companyInputAdd.trim();
+                        setCustomCompanies(prev => Array.from(new Set([...prev, val])));
+                        setNewCompanyName(val);
+                        setCompanyInputAdd('');
+                        setIsAddingCompanyInAdd(false);
+                      }
+                    }}
+                    disabled={!companyInputAdd.trim()}
+                    className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer shadow-2xs"
+                  >
+                    Add
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsAddingCompanyInAdd(false);
+                      setCompanyInputAdd('');
+                    }}
+                    className="px-2.5 py-2 bg-zinc-200 hover:bg-zinc-300 text-zinc-700 rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1">
+                  <select
+                    value={newCompanyName}
+                    onChange={(e) => setNewCompanyName(e.target.value)}
+                    className="w-full px-3 py-2.5 text-xs bg-zinc-50 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium text-zinc-800 cursor-pointer appearance-none truncate pr-8"
+                  >
+                    <option value="">-- Select Company --</option>
+                    {companyNames.map((comp) => (
+                      <option key={comp} value={comp}>
+                        {comp}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="w-3.5 h-3.5 text-zinc-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsAddingCompanyInAdd(true);
+                    setCompanyInputAdd('');
+                  }}
+                  className="px-3 py-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-xl text-xs font-bold transition-all flex items-center gap-1 shrink-0 cursor-pointer shadow-2xs"
+                  title="Add new company name to dropdown"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Add</span>
+                </button>
+              </div>
+            )}
+          </div>
+
           {/* Price */}
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-zinc-800 uppercase tracking-wider">
@@ -1535,6 +1838,114 @@ export default function AdminProductsPage() {
               onChange={(e) => setEditTitle(e.target.value)}
               className="w-full px-3 py-2.5 text-xs bg-zinc-50 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
             />
+          </div>
+
+          {/* Company Name with Dropdown & "+ Add" button */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-zinc-800 uppercase tracking-wider">
+                Company Name
+              </label>
+              {!isAddingCompanyInEdit && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsAddingCompanyInEdit(true);
+                    setCompanyInputEdit('');
+                  }}
+                  className="text-xs font-bold text-indigo-600 hover:text-indigo-800 cursor-pointer inline-flex items-center gap-1 hover:underline"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Add Company</span>
+                </button>
+              )}
+            </div>
+
+            {isAddingCompanyInEdit ? (
+              <div className="space-y-1 bg-indigo-50/50 p-2.5 rounded-xl border border-indigo-200">
+                <span className="text-[11px] font-bold text-indigo-900 block">
+                  Add New Company to Dropdown:
+                </span>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    autoFocus
+                    placeholder="Enter company name..."
+                    value={companyInputEdit}
+                    onChange={(e) => setCompanyInputEdit(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if (companyInputEdit.trim()) {
+                          const val = companyInputEdit.trim();
+                          setCustomCompanies(prev => Array.from(new Set([...prev, val])));
+                          setEditCompanyName(val);
+                          setCompanyInputEdit('');
+                          setIsAddingCompanyInEdit(false);
+                        }
+                      }
+                    }}
+                    className="flex-1 px-3 py-2 text-xs bg-white border border-indigo-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium text-zinc-900"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (companyInputEdit.trim()) {
+                        const val = companyInputEdit.trim();
+                        setCustomCompanies(prev => Array.from(new Set([...prev, val])));
+                        setEditCompanyName(val);
+                        setCompanyInputEdit('');
+                        setIsAddingCompanyInEdit(false);
+                      }
+                    }}
+                    disabled={!companyInputEdit.trim()}
+                    className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer shadow-2xs"
+                  >
+                    Add
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsAddingCompanyInEdit(false);
+                      setCompanyInputEdit('');
+                    }}
+                    className="px-2.5 py-2 bg-zinc-200 hover:bg-zinc-300 text-zinc-700 rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1">
+                  <select
+                    value={editCompanyName}
+                    onChange={(e) => setEditCompanyName(e.target.value)}
+                    className="w-full px-3 py-2.5 text-xs bg-zinc-50 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium text-zinc-800 cursor-pointer appearance-none truncate pr-8"
+                  >
+                    <option value="">-- Select Company --</option>
+                    {companyNames.map((comp) => (
+                      <option key={comp} value={comp}>
+                        {comp}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="w-3.5 h-3.5 text-zinc-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsAddingCompanyInEdit(true);
+                    setCompanyInputEdit('');
+                  }}
+                  className="px-3 py-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-xl text-xs font-bold transition-all flex items-center gap-1 shrink-0 cursor-pointer shadow-2xs"
+                  title="Add new company name to dropdown"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Add</span>
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Price */}

@@ -31,7 +31,10 @@ import {
   MessageSquare,
   Send,
   ShoppingBag,
-  ImageOff
+  ImageOff,
+  ChevronLeft,
+  ChevronRight,
+  ChevronDown
 } from 'lucide-react';
 import { AdminSidebar } from '@/components/layout/AdminSidebar';
 import { AdminHeader } from '@/components/layout/AdminHeader';
@@ -103,14 +106,44 @@ export default function AdminInquiriesPage() {
   const [inquiryToDelete, setInquiryToDelete] = useState<CustomerInquiry | null>(null);
   const [isDeletingInquiry, setIsDeletingInquiry] = useState<boolean>(false);
 
-  const fetchInquiries = async () => {
+  // Dynamic Backend Pagination State
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [itemsPerPage, setItemsPerPage] = useState<number>(10);
+  const [totalPages, setTotalPages] = useState<number>(1);
+  const [totalInquiries, setTotalInquiries] = useState<number>(0);
+  const [backendStats, setBackendStats] = useState<any>(null);
+
+  const fetchInquiries = async (targetPage = currentPage, targetLimit = itemsPerPage) => {
     setLoading(true);
     try {
-      const res = await apiClient.get(API_ENDPOINTS.INQUIRIES.LIST, {
+      const params = new URLSearchParams();
+      params.append('page', String(targetPage));
+      params.append('limit', String(targetLimit));
+      if (statusFilter !== 'all') params.append('status', statusFilter);
+      if (timeframeFilter !== 'all') params.append('timeframe', timeframeFilter);
+      if (categoryFilter !== 'all') params.append('category', categoryFilter);
+      if (inquiryTypeFilter !== 'all') params.append('inquiryType', inquiryTypeFilter);
+      if (searchQuery.trim()) params.append('search', searchQuery.trim());
+
+      const res = await apiClient.get(`${API_ENDPOINTS.INQUIRIES.LIST}?${params.toString()}`, {
         headers: { 'x-user-role': 'admin' }
       });
+
       if (res.data?.data) {
         setInquiries(res.data.data);
+      }
+      if (res.data?.pagination) {
+        setCurrentPage(res.data.pagination.page || targetPage);
+        setTotalPages(res.data.pagination.totalPages || 1);
+        setTotalInquiries(res.data.pagination.total || 0);
+      } else {
+        const count = Array.isArray(res.data?.data) ? res.data.data.length : 0;
+        setCurrentPage(targetPage);
+        setTotalPages(Math.ceil(count / targetLimit) || 1);
+        setTotalInquiries(count);
+      }
+      if (res.data?.stats) {
+        setBackendStats(res.data.stats);
       }
     } catch (err: any) {
       console.error('Failed to fetch inquiries:', err);
@@ -121,8 +154,37 @@ export default function AdminInquiriesPage() {
   };
 
   useEffect(() => {
-    fetchInquiries();
-  }, []);
+    fetchInquiries(1);
+  }, [statusFilter, timeframeFilter, categoryFilter, inquiryTypeFilter, itemsPerPage]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchInquiries(1);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage < 1 || newPage > totalPages || newPage === currentPage) return;
+    setCurrentPage(newPage);
+    fetchInquiries(newPage);
+  };
+
+  const getPageNumbers = () => {
+    const pages: (number | string)[] = [];
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      if (currentPage <= 4) {
+        pages.push(1, 2, 3, 4, 5, '...', totalPages);
+      } else if (currentPage >= totalPages - 3) {
+        pages.push(1, '...', totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
+      } else {
+        pages.push(1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages);
+      }
+    }
+    return pages;
+  };
 
   const getUnseenCount = (inq: CustomerInquiry) => {
     if (!inq.messages || inq.messages.length === 0) return 0;
@@ -355,56 +417,27 @@ export default function AdminInquiriesPage() {
     return false;
   };
 
-  // Filtered Inquiries
-  const filteredInquiries = inquiries.filter((inq) => {
-    const matchesStatus = statusFilter === 'all' || inq.status === statusFilter;
+  // Inquiries list from backend is already filtered and paginated
+  const filteredInquiries = inquiries;
 
-    let matchesTimeframe = true;
-    if (timeframeFilter === 'today') matchesTimeframe = isToday(inq.createdAt);
-    else if (timeframeFilter === 'week') matchesTimeframe = isThisWeek(inq.createdAt);
-    else if (timeframeFilter === 'month') matchesTimeframe = isThisMonth(inq.createdAt);
+  // Dynamic counts using backendStats when available
+  const totalCount = backendStats ? backendStats.total : totalInquiries;
+  const artisanProductCount = backendStats ? backendStats.artisan : inquiries.filter(isArtisanProductInquiry).length;
+  const customRequirementCount = backendStats ? backendStats.custom : inquiries.filter((i) => !isArtisanProductInquiry(i)).length;
+  const pendingCount = backendStats ? backendStats.pending : inquiries.filter((i) => i.status === 'pending').length;
+  const inReviewCount = backendStats ? backendStats.inReview : inquiries.filter((i) => i.status === 'in_review').length;
+  const quotedCount = backendStats ? backendStats.quoted : inquiries.filter((i) => i.status === 'quoted').length;
+  const approvedCount = backendStats ? backendStats.approved : inquiries.filter((i) => i.status === 'approved').length;
 
-    const query = searchQuery.toLowerCase().trim();
-    const matchesSearch =
-      !query ||
-      inq.inquiryNumber.toLowerCase().includes(query) ||
-      inq.email.toLowerCase().includes(query) ||
-      inq.name.toLowerCase().includes(query) ||
-      (inq.size && inq.size.toLowerCase().includes(query)) ||
-      (inq.phone && inq.phone.includes(query));
-
-    const matchesCategory =
-      categoryFilter === 'all' ||
-      inq.category === categoryFilter ||
-      (!inq.category && categoryFilter === 'other');
-
-    const isArtisan = isArtisanProductInquiry(inq);
-    const matchesInquiryType =
-      inquiryTypeFilter === 'all' ||
-      (inquiryTypeFilter === 'artisan_product' && isArtisan) ||
-      (inquiryTypeFilter === 'custom_requirement' && !isArtisan);
-
-    return matchesStatus && matchesTimeframe && matchesCategory && matchesSearch && matchesInquiryType;
-  });
-
-  // Dynamic counts
-  const totalCount = inquiries.length;
-  const artisanProductCount = inquiries.filter(isArtisanProductInquiry).length;
-  const customRequirementCount = inquiries.filter((i) => !isArtisanProductInquiry(i)).length;
-  const pendingCount = inquiries.filter((i) => i.status === 'pending').length;
-  const inReviewCount = inquiries.filter((i) => i.status === 'in_review').length;
-  const quotedCount = inquiries.filter((i) => i.status === 'quoted').length;
-  const approvedCount = inquiries.filter((i) => i.status === 'approved').length;
-
-  const todayCount = inquiries.filter((i) => isToday(i.createdAt)).length;
-  const thisWeekCount = inquiries.filter((i) => isThisWeek(i.createdAt)).length;
-  const thisMonthCount = inquiries.filter((i) => isThisMonth(i.createdAt)).length;
+  const todayCount = backendStats ? backendStats.today : inquiries.filter((i) => isToday(i.createdAt)).length;
+  const thisWeekCount = backendStats ? backendStats.week : inquiries.filter((i) => isThisWeek(i.createdAt)).length;
+  const thisMonthCount = backendStats ? backendStats.month : inquiries.filter((i) => isThisMonth(i.createdAt)).length;
 
   // Category counts
-  const fashionCount = inquiries.filter((i) => i.category === 'fashion').length;
-  const jewelryCount = inquiries.filter((i) => i.category === 'jewelry').length;
-  const homeDecorCount = inquiries.filter((i) => i.category === 'home_decor').length;
-  const otherCount = inquiries.filter((i) => !i.category || i.category === 'other').length;
+  const fashionCount = backendStats ? backendStats.fashion : inquiries.filter((i) => i.category === 'fashion').length;
+  const jewelryCount = backendStats ? backendStats.jewelry : inquiries.filter((i) => i.category === 'jewelry').length;
+  const homeDecorCount = backendStats ? backendStats.homeDecor : inquiries.filter((i) => i.category === 'home_decor').length;
+  const otherCount = backendStats ? backendStats.other : inquiries.filter((i) => !i.category || i.category === 'other').length;
 
   const getStatusBadge = (status: CustomerInquiry['status']) => {
     switch (status) {
@@ -514,7 +547,7 @@ export default function AdminInquiriesPage() {
               )}
               <button
                 type="button"
-                onClick={fetchInquiries}
+                onClick={() => fetchInquiries()}
                 className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition-all flex items-center gap-2 cursor-pointer shadow-xs shadow-indigo-600/20"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
@@ -821,66 +854,40 @@ export default function AdminInquiriesPage() {
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm">
-                  <thead className="bg-slate-50/90 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[11px]">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-50/90 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
                     <tr>
-                      <th className="py-3.5 px-5">Inquiry Ref</th>
-                      <th className="py-3.5 px-5">Category</th>
-                      <th className="py-3.5 px-5">Product Details</th>
-                      <th className="py-3.5 px-5">Dimensions / Size</th>
-                      <th className="py-3.5 px-5">Customer Info</th>
-                      <th className="py-3.5 px-5">Quotation</th>
-                      <th className="py-3.5 px-5">Status</th>
-                      <th className="py-3.5 px-5">Submitted</th>
-                      <th className="py-3.5 px-5 text-right">Action</th>
+                      <th className="py-2.5 px-3 whitespace-nowrap">Inquiry Ref</th>
+                      <th className="py-2.5 px-3 whitespace-nowrap">Category</th>
+                      <th className="py-2.5 px-3">Product Details</th>
+                      <th className="py-2.5 px-3">Dimensions / Size</th>
+                      <th className="py-2.5 px-3">Customer Info</th>
+                      <th className="py-2.5 px-3 whitespace-nowrap">Quotation</th>
+                      <th className="py-2.5 px-3 whitespace-nowrap">Status</th>
+                      <th className="py-2.5 px-3 whitespace-nowrap">Submitted</th>
+                      <th className="py-2.5 px-3 text-right whitespace-nowrap">Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 bg-white">
                     {filteredInquiries.map((inq) => {
                       const hasImage = Boolean(inq.images && inq.images.length > 0 && inq.images[0]);
                       const primaryImage = hasImage ? inq.images![0] : '';
-                      const isNewToday = isToday(inq.createdAt);
                       return (
                         <tr key={inq._id || inq.inquiryNumber} className="hover:bg-slate-50/75 transition-colors">
-                          <td className="py-4 px-5 align-top">
-                            <span className="font-mono font-black text-indigo-700 text-xs bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-200/80 inline-block">
+                          <td className="py-2.5 px-3 whitespace-nowrap align-middle">
+                            <span className="font-mono font-bold text-indigo-700 text-[11px] bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-200/80 inline-block">
                               #{inq.inquiryNumber}
                             </span>
-                            {isNewToday && (
-                              <span className="block text-[10px] text-emerald-700 font-bold mt-1">
-                                ● New Today
-                              </span>
-                            )}
-                            {inq.messages && inq.messages.length > 0 && (
-                              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-full mt-1.5">
-                                <MessageSquare className="w-3 h-3 text-indigo-600" />
-                                {inq.messages.length} msg{inq.messages.length > 1 ? 's' : ''}
-                                {inq.messages[inq.messages.length - 1]?.sender === 'customer' && (
-                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse ml-0.5" title="New customer message" />
-                                )}
-                              </span>
-                            )}
-                            <div className="mt-1.5">
-                              {isArtisanProductInquiry(inq) ? (
-                                <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md shadow-2xs">
-                                  <ShoppingBag className="w-2.5 h-2.5 text-emerald-600" /> Artisan Product
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md shadow-2xs">
-                                  <Sparkles className="w-2.5 h-2.5 text-amber-600" /> Custom Studio
-                                </span>
-                              )}
-                            </div>
                           </td>
-                          <td className="py-4 px-5 whitespace-nowrap align-top">
+                          <td className="py-2.5 px-3 whitespace-nowrap align-middle">
                             {getCategoryBadge(inq.category)}
                           </td>
-                          <td className="py-4 px-5 align-top">
-                            <div className="flex items-start gap-3">
+                          <td className="py-2.5 px-3 align-middle">
+                            <div className="flex items-center gap-2.5">
                               {hasImage ? (
                                 <div
                                   onClick={() => setIsImagePreviewOpen(primaryImage)}
-                                  className="w-12 h-12 rounded-xl overflow-hidden border border-slate-200 shrink-0 cursor-pointer relative group bg-slate-100 shadow-2xs"
+                                  className="w-9 h-9 rounded-lg overflow-hidden border border-slate-200 shrink-0 cursor-pointer relative group bg-slate-100 shadow-2xs"
                                   title="Click to view image"
                                 >
                                   <img
@@ -889,24 +896,23 @@ export default function AdminInquiriesPage() {
                                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-200"
                                   />
                                   <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                                    <Eye className="w-4 h-4 text-white" />
+                                    <Eye className="w-3.5 h-3.5 text-white" />
                                   </div>
                                 </div>
                               ) : (
                                 <div
-                                  className="w-12 h-12 rounded-xl border border-dashed border-slate-200 shrink-0 flex flex-col items-center justify-center bg-slate-50 text-slate-400"
+                                  className="w-9 h-9 rounded-lg border border-dashed border-slate-200 shrink-0 flex flex-col items-center justify-center bg-slate-50 text-slate-400"
                                   title="No photo attached"
                                 >
-                                  <ImageOff className="w-4 h-4 text-slate-300" />
-                                  <span className="text-[8px] font-bold text-slate-400 uppercase mt-0.5">None</span>
+                                  <ImageOff className="w-3.5 h-3.5 text-slate-300" />
                                 </div>
                               )}
-                              <div className="min-w-0">
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  <p className="font-bold text-slate-900 text-sm leading-snug">{inq.name}</p>
+                              <div className="min-w-0 max-w-[160px]">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <p className="font-bold text-slate-900 text-xs leading-snug truncate" title={inq.name}>{inq.name}</p>
                                   {getUnseenCount(inq) > 0 && (
                                     <span
-                                      className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-[11px] font-black bg-red-600 text-white shadow-xs"
+                                      className="inline-flex items-center justify-center min-w-[18px] h-4 px-1 rounded-full text-[10px] font-black bg-red-600 text-white shadow-xs"
                                       title={`${getUnseenCount(inq)} new message(s)`}
                                     >
                                       {getUnseenCount(inq)}
@@ -914,68 +920,68 @@ export default function AdminInquiriesPage() {
                                   )}
                                 </div>
                                 {inq.description && (
-                                  <p className="text-xs text-slate-500 line-clamp-2 max-w-xs mt-0.5 leading-relaxed">
+                                  <p className="text-[11px] text-slate-500 truncate mt-0.5" title={inq.description}>
                                     {inq.description}
                                   </p>
                                 )}
                               </div>
                             </div>
                           </td>
-                          <td className="py-4 px-5 align-top">
-                            <span className="font-semibold text-slate-800 bg-slate-100/90 px-2.5 py-1 rounded-lg text-xs border border-slate-200/60 block truncate max-w-xs">
-                              {inq.size}
+                          <td className="py-2.5 px-3 align-middle">
+                            <span className="font-semibold text-slate-800 bg-slate-100/90 px-2 py-0.5 rounded-md text-[11px] border border-slate-200/60 block truncate max-w-[140px]" title={inq.size || 'Standard'}>
+                              {inq.size || 'Standard'}
                             </span>
-                            <span className="text-slate-400 block text-[11px] mt-1 font-medium">
+                            <span className="text-slate-400 block text-[10px] mt-0.5 font-medium">
                               Qty: <strong className="text-slate-600">{inq.quantity || 1}</strong> unit(s)
                             </span>
                           </td>
-                          <td className="py-4 px-5 align-top">
-                            <p className="font-semibold text-slate-800 text-xs">{inq.email}</p>
+                          <td className="py-2.5 px-3 align-middle">
+                            <p className="font-semibold text-slate-800 text-[11px] truncate max-w-[140px]" title={inq.email}>{inq.email}</p>
                             {inq.phone ? (
-                              <p className="text-[11px] text-slate-500 font-mono mt-0.5">{inq.phone}</p>
+                              <p className="text-[10px] text-slate-500 font-mono mt-0.5">{inq.phone}</p>
                             ) : (
-                              <span className="text-slate-400 text-[11px] italic">No phone</span>
+                              <span className="text-slate-400 text-[10px] italic">No phone</span>
                             )}
                           </td>
-                          <td className="py-4 px-5 font-bold text-sm align-top">
+                          <td className="py-2.5 px-3 font-bold align-middle whitespace-nowrap">
                             {inq.quotedPrice && inq.quotedPrice > 0 ? (
-                              <span className="text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200 inline-block font-mono font-bold">
+                              <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 inline-block font-mono font-bold text-xs">
                                 ₹{inq.quotedPrice.toLocaleString()}
                               </span>
                             ) : (
                               <span className="text-slate-400 font-normal italic text-xs">Pending Quote</span>
                             )}
                           </td>
-                          <td className="py-4 px-5 align-top whitespace-nowrap">
+                          <td className="py-2.5 px-3 align-middle whitespace-nowrap">
                             {getStatusBadge(inq.status)}
                           </td>
-                          <td className="py-4 px-5 text-slate-500 text-xs whitespace-nowrap align-top">
+                          <td className="py-2.5 px-3 text-slate-500 text-xs whitespace-nowrap align-middle">
                             {inq.createdAt ? (
                               <div>
-                                <span className="font-semibold text-slate-700 block">{new Date(inq.createdAt).toLocaleDateString()}</span>
-                                <span className="text-slate-400 text-[11px]">{new Date(inq.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                <span className="font-semibold text-slate-700 block text-[11px]">{new Date(inq.createdAt).toLocaleDateString()}</span>
+                                <span className="text-slate-400 text-[10px]">{new Date(inq.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                               </div>
                             ) : (
                               'Today'
                             )}
                           </td>
-                          <td className="py-4 px-5 text-right align-top">
-                            <div className="flex items-center justify-end gap-1.5">
+                          <td className="py-2.5 px-3 text-right align-middle whitespace-nowrap">
+                            <div className="flex items-center justify-end gap-1">
                               <button
                                 type="button"
                                 onClick={() => openUpdateModal(inq)}
-                                className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all inline-flex items-center gap-1.5 cursor-pointer shadow-xs shadow-indigo-600/20"
+                                className="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all inline-flex items-center gap-1 cursor-pointer shadow-xs shadow-indigo-600/20"
                               >
-                                <Edit3 className="w-3.5 h-3.5" />
+                                <Edit3 className="w-3 h-3" />
                                 <span>Review</span>
                               </button>
                               <button
                                 type="button"
                                 onClick={() => handleOpenDeleteModal(inq)}
-                                className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer"
+                                className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
                                 title="Delete inquiry"
                               >
-                                <Trash2 className="w-4 h-4" />
+                                <Trash2 className="w-3.5 h-3.5" />
                               </button>
                             </div>
                           </td>
@@ -986,6 +992,98 @@ export default function AdminInquiriesPage() {
                 </table>
               </div>
             )}
+
+            {/* PROPER MODERN BACKEND PAGINATION BAR */}
+            <div className="p-3 sm:px-5 border-t border-slate-200/90 bg-slate-50/70 flex flex-col md:flex-row items-center justify-between gap-3 text-xs">
+              {/* Left: Summary text & Rows Per Page Dropdown */}
+              <div className="flex flex-wrap items-center gap-3 text-slate-600">
+                <span className="text-slate-500 text-xs">
+                  Showing <strong className="font-bold text-slate-900">{totalInquiries > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0}</strong> to{' '}
+                  <strong className="font-bold text-slate-900">{Math.min(currentPage * itemsPerPage, totalInquiries)}</strong> of{' '}
+                  <strong className="font-bold text-slate-900">{totalInquiries}</strong> inquiries
+                </span>
+
+                <div className="h-3.5 w-px bg-slate-300 hidden sm:block" />
+
+                {/* 10, 20, 50 Rows Per Page Proper Dropdown */}
+                <div className="flex items-center gap-1.5">
+                  <span className="text-slate-500 font-medium text-xs">Rows per page:</span>
+                  <div className="relative inline-flex items-center">
+                    <select
+                      value={itemsPerPage}
+                      onChange={(e) => {
+                        const newLimit = Number(e.target.value);
+                        setItemsPerPage(newLimit);
+                        setCurrentPage(1);
+                        fetchInquiries(1, newLimit);
+                      }}
+                      className="w-14 appearance-none bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 rounded-lg pl-2 pr-5 py-1 text-xs font-bold transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 cursor-pointer shadow-2xs"
+                    >
+                      <option value={10}>10</option>
+                      <option value={20}>20</option>
+                      <option value={50}>50</option>
+                    </select>
+                    <ChevronDown className="w-3 h-3 text-slate-400 absolute right-1.5 pointer-events-none" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Right: Page Navigation Buttons */}
+              <div className="flex items-center gap-3">
+                <span className="text-slate-500 text-xs hidden sm:inline">
+                  Page <strong className="font-bold text-slate-900">{currentPage}</strong> of{' '}
+                  <strong className="font-bold text-slate-900">{totalPages}</strong>
+                </span>
+
+                <div className="inline-flex items-center p-1 bg-white rounded-xl border border-slate-200 shadow-2xs gap-1">
+                  <button
+                    type="button"
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage <= 1 || loading}
+                    className="px-2.5 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-indigo-600 disabled:opacity-40 disabled:cursor-not-allowed font-bold text-xs transition-all flex items-center gap-1 cursor-pointer"
+                    title="Previous page"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                    <span className="hidden sm:inline">Prev</span>
+                  </button>
+
+                  <div className="flex items-center gap-1 px-1">
+                    {getPageNumbers().map((p, idx) => (
+                      typeof p === 'number' ? (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => handlePageChange(p)}
+                          disabled={loading}
+                          className={`min-w-8 h-8 rounded-lg text-xs font-black transition-all cursor-pointer ${
+                            currentPage === p
+                              ? 'bg-indigo-600 text-white shadow-xs shadow-indigo-600/30'
+                              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                          }`}
+                        >
+                          {p}
+                        </button>
+                      ) : (
+                        <span key={idx} className="px-1.5 text-slate-400 font-bold">
+                          ...
+                        </span>
+                      )
+                    ))}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage >= totalPages || loading}
+                    className="px-2.5 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-indigo-600 disabled:opacity-40 disabled:cursor-not-allowed font-bold text-xs transition-all flex items-center gap-1 cursor-pointer"
+                    title="Next page"
+                  >
+                    <span className="hidden sm:inline">Next</span>
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </main>
       </div>
@@ -1161,8 +1259,8 @@ export default function AdminInquiriesPage() {
                           <div
                             key={msg._id || mIdx}
                             className={`p-2.5 rounded-xl text-xs space-y-1 ${isCustomer
-                                ? 'bg-amber-50/70 border border-amber-200/80 text-amber-950'
-                                : 'bg-indigo-50/70 border border-indigo-200/80 text-indigo-950 ml-4'
+                              ? 'bg-amber-50/70 border border-amber-200/80 text-amber-950'
+                              : 'bg-indigo-50/70 border border-indigo-200/80 text-indigo-950 ml-4'
                               }`}
                           >
                             <div className="flex items-center justify-between text-[10px]">
