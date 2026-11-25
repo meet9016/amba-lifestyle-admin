@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Select';
 import { Modal } from '@/components/ui/Modal';
+import { Dropdown } from '@/components/ui/Dropdown';
 import { apiClient, API_ENDPOINTS } from '@/lib/api';
 import {
   Package,
@@ -367,15 +368,15 @@ export default function AdminProductsPage() {
         prev.map(item =>
           item.id === editingProductId
             ? {
-                ...item,
-                title: editTitle.trim(),
-                price: Number(editPrice),
-                category: editCategory,
-                companyName: finalCompany,
-                vendorName: finalCompany,
-                imageUrl: finalImg,
-                images: [finalImg]
-              }
+              ...item,
+              title: editTitle.trim(),
+              price: Number(editPrice),
+              category: editCategory,
+              companyName: finalCompany,
+              vendorName: finalCompany,
+              imageUrl: finalImg,
+              images: [finalImg]
+            }
             : item
         )
       );
@@ -621,27 +622,27 @@ export default function AdminProductsPage() {
     const cat = (category || '').toLowerCase();
     if (cat.includes('fashion') || cat.includes('apparel')) {
       return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-pink-50 text-pink-700 border border-pink-200 shadow-2xs">
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold bg-pink-50 text-pink-700 border border-pink-200 shadow-2xs whitespace-nowrap">
           <Scissors className="w-3 h-3 text-pink-600 stroke-[2.2]" /> {category || 'Fashion'}
         </span>
       );
     }
     if (cat.includes('jewel') || cat.includes('silver')) {
       return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200 shadow-2xs">
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200 shadow-2xs whitespace-nowrap">
           <Crown className="w-3 h-3 text-amber-600 stroke-[2.2]" /> {category || 'Jewelry'}
         </span>
       );
     }
     if (cat.includes('decor') || cat.includes('home')) {
       return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 shadow-2xs">
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 shadow-2xs whitespace-nowrap">
           <Armchair className="w-3 h-3 text-emerald-600 stroke-[2.2]" /> {category || 'Home Decor'}
         </span>
       );
     }
     return (
-      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-purple-50 text-purple-800 border border-purple-200 shadow-2xs">
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold bg-purple-50 text-purple-800 border border-purple-200 shadow-2xs whitespace-nowrap">
         <Wand2 className="w-3 h-3 text-purple-600 stroke-[2.2]" /> {category || 'Craft'}
       </span>
     );
@@ -659,7 +660,7 @@ export default function AdminProductsPage() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
                   All Products Directory
                 </h1>
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
@@ -676,7 +677,7 @@ export default function AdminProductsPage() {
               <button
                 type="button"
                 onClick={() => fetchAdminData()}
-                className="px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-bold rounded-xl transition-all flex items-center gap-2 cursor-pointer shadow-2xs"
+                className="h-9 px-3.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-bold rounded-xl transition-all inline-flex items-center gap-2 cursor-pointer shadow-2xs"
                 title="Refresh products list"
               >
                 <RefreshCw className={`w-3.5 h-3.5 text-slate-500 ${loading ? 'animate-spin' : ''}`} />
@@ -687,19 +688,20 @@ export default function AdminProductsPage() {
                 href="http://localhost:3000"
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 transition-all shadow-2xs"
+                className="h-9 px-3.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-bold rounded-xl transition-all inline-flex items-center gap-1.5 cursor-pointer shadow-2xs"
               >
                 <ExternalLink className="w-3.5 h-3.5 text-slate-500" />
                 <span>View Storefront</span>
               </a>
 
-              <Button
+              <button
+                type="button"
                 onClick={() => setIsAddModalOpen(true)}
-                className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-xs shadow-indigo-600/20 transition-all cursor-pointer"
+                className="h-9 px-3.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-xs shadow-indigo-600/20 transition-all inline-flex items-center gap-1.5 cursor-pointer"
               >
-                <Plus className="w-4 h-4" />
+                <Plus className="w-3.5 h-3.5" />
                 <span>Add New Product</span>
-              </Button>
+              </button>
             </div>
           </div>
 
@@ -792,17 +794,15 @@ export default function AdminProductsPage() {
                 <button
                   type="button"
                   onClick={() => setActiveTab('all')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer whitespace-nowrap ${
-                    activeTab === 'all'
-                      ? 'bg-white text-slate-900 shadow-xs font-black ring-1 ring-black/5'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-white/40'
-                  }`}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer whitespace-nowrap ${activeTab === 'all'
+                    ? 'bg-white text-slate-900 shadow-xs font-black ring-1 ring-black/5'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/40'
+                    }`}
                 >
                   <Package className="w-3.5 h-3.5 text-indigo-600" />
                   <span>All Products</span>
-                  <span className={`text-[10px] font-black px-1.5 py-0.2 rounded-md ${
-                    activeTab === 'all' ? 'bg-indigo-50 text-indigo-700' : 'bg-slate-300/60 text-slate-600'
-                  }`}>
+                  <span className={`text-[10px] font-black px-1.5 py-0.2 rounded-md ${activeTab === 'all' ? 'bg-indigo-50 text-indigo-700' : 'bg-slate-300/60 text-slate-600'
+                    }`}>
                     {countTotal}
                   </span>
                 </button>
@@ -810,17 +810,15 @@ export default function AdminProductsPage() {
                 <button
                   type="button"
                   onClick={() => setActiveTab('active')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer whitespace-nowrap ${
-                    activeTab === 'active'
-                      ? 'bg-white text-emerald-950 shadow-xs font-black ring-1 ring-black/5'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-white/40'
-                  }`}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer whitespace-nowrap ${activeTab === 'active'
+                    ? 'bg-white text-emerald-950 shadow-xs font-black ring-1 ring-black/5'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/40'
+                    }`}
                 >
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                   <span>Active</span>
-                  <span className={`text-[10px] font-black px-1.5 py-0.2 rounded-md ${
-                    activeTab === 'active' ? 'bg-emerald-100 text-emerald-900' : 'bg-slate-300/60 text-slate-600'
-                  }`}>
+                  <span className={`text-[10px] font-black px-1.5 py-0.2 rounded-md ${activeTab === 'active' ? 'bg-emerald-100 text-emerald-900' : 'bg-slate-300/60 text-slate-600'
+                    }`}>
                     {countActive}
                   </span>
                 </button>
@@ -828,17 +826,15 @@ export default function AdminProductsPage() {
                 <button
                   type="button"
                   onClick={() => setActiveTab('inactive')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer whitespace-nowrap ${
-                    activeTab === 'inactive'
-                      ? 'bg-white text-slate-900 shadow-xs font-black ring-1 ring-black/5'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-white/40'
-                  }`}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer whitespace-nowrap ${activeTab === 'inactive'
+                    ? 'bg-white text-slate-900 shadow-xs font-black ring-1 ring-black/5'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/40'
+                    }`}
                 >
                   <XCircle className="w-3.5 h-3.5 text-slate-500" />
                   <span>Inactive</span>
-                  <span className={`text-[10px] font-black px-1.5 py-0.2 rounded-md ${
-                    activeTab === 'inactive' ? 'bg-slate-200 text-slate-800' : 'bg-slate-300/60 text-slate-600'
-                  }`}>
+                  <span className={`text-[10px] font-black px-1.5 py-0.2 rounded-md ${activeTab === 'inactive' ? 'bg-slate-200 text-slate-800' : 'bg-slate-300/60 text-slate-600'
+                    }`}>
                     {countInactive}
                   </span>
                 </button>
@@ -902,15 +898,15 @@ export default function AdminProductsPage() {
 
             {/* PRODUCTS DATA TABLE */}
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
+              <table className="w-full text-left text-xs sm:text-sm">
                 <thead>
-                  <tr className="border-b border-slate-200 bg-slate-50/80 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                    <th className="py-3 px-4">Product Details</th>
-                    <th className="py-3 px-4">Artisan / Vendor</th>
-                    <th className="py-3 px-4">Category</th>
-                    <th className="py-3 px-4">Price</th>
-                    <th className="py-3 px-4">Storefront Status</th>
-                    <th className="py-3 px-4 text-right">Actions</th>
+                  <tr className="border-b border-slate-200 bg-slate-50/80 text-[11px] font-bold text-slate-600 uppercase tracking-wider">
+                    <th className="py-3 px-3 sm:px-4 whitespace-nowrap">Product Details</th>
+                    <th className="py-3 px-3 sm:px-4 whitespace-nowrap">Artisan / Vendor</th>
+                    <th className="py-3 px-3 sm:px-4 whitespace-nowrap">Category</th>
+                    <th className="py-3 px-3 sm:px-4 whitespace-nowrap">Price</th>
+                    <th className="py-3 px-3 sm:px-4 whitespace-nowrap">Storefront Status</th>
+                    <th className="py-3 px-3 sm:px-4 text-right whitespace-nowrap">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -944,13 +940,13 @@ export default function AdminProductsPage() {
                     filteredProducts.map((p) => (
                       <tr key={p.id} className="text-slate-700 hover:bg-slate-50/70 transition-colors">
                         {/* 1. Product Thumbnail & Info */}
-                        <td className="py-3.5 px-4">
+                        <td className="py-3.5 px-3 sm:px-4">
                           <div
                             onClick={() => handleOpenDetails(p)}
                             className="flex items-center gap-3 cursor-pointer group"
                             title="Click to inspect full details and specifications"
                           >
-                            <div className="relative w-12 h-14 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 shrink-0 shadow-2xs">
+                            <div className="relative w-11 h-13 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 shrink-0 shadow-2xs">
                               <img
                                 src={p.imageUrl}
                                 alt={p.title}
@@ -958,15 +954,15 @@ export default function AdminProductsPage() {
                               />
                             </div>
                             <div className="max-w-xs min-w-0">
-                              <p className="font-bold text-slate-900 text-xs line-clamp-1 group-hover:text-indigo-600 transition-colors">
+                              <p className="font-bold text-slate-900 text-xs sm:text-sm line-clamp-1 group-hover:text-indigo-600 transition-colors">
                                 {p.title}
                               </p>
                               <div className="flex items-center gap-1.5 mt-0.5">
-                                <span className="font-mono text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200/60">
+                                <span className="font-mono text-[11px] text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200/60 font-semibold">
                                   ID: {p.id.slice(-6)}
                                 </span>
                                 {p.stock !== undefined && (
-                                  <span className="text-[10px] text-slate-500 font-medium">
+                                  <span className="text-[11px] text-slate-600 font-semibold">
                                     • {p.stock} in stock
                                   </span>
                                 )}
@@ -976,15 +972,15 @@ export default function AdminProductsPage() {
                         </td>
 
                         {/* 2. Vendor */}
-                        <td className="py-3 px-4">
-                          <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-800">
+                        <td className="py-3 px-3 sm:px-4">
+                          <div className="flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-slate-800">
                             <Store className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                            <span className="truncate max-w-[140px]">{p.vendorName}</span>
+                            <span className="truncate max-w-[150px]">{p.vendorName}</span>
                           </div>
                           {p.rating && (
                             <div className="flex items-center gap-1 mt-0.5">
                               <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                              <span className="text-[11px] font-bold text-slate-600">
+                              <span className="text-xs font-bold text-slate-700">
                                 {p.rating.toFixed(1)}
                               </span>
                             </div>
@@ -992,29 +988,29 @@ export default function AdminProductsPage() {
                         </td>
 
                         {/* 3. Category */}
-                        <td className="py-3 px-4">
+                        <td className="py-3 px-3 sm:px-4">
                           {getCategoryBadge(p.category)}
                           {p.subCategory && (
-                            <div className="text-[10px] font-medium text-slate-400 mt-1 truncate max-w-[140px]">
+                            <div className="text-[11px] font-medium text-slate-500 mt-1 truncate max-w-[140px]">
                               {p.subCategory}
                             </div>
                           )}
                         </td>
 
                         {/* 4. Price */}
-                        <td className="py-3 px-4">
-                          <div className="font-mono font-black text-slate-900 text-sm">
+                        <td className="py-3 px-3 sm:px-4 whitespace-nowrap">
+                          <div className="font-extrabold text-slate-900 text-sm">
                             ₹{p.price.toLocaleString()}
                           </div>
                           {p.discountPrice && p.discountPrice > p.price && (
-                            <div className="text-[10px] font-mono text-slate-400 line-through">
+                            <div className="text-[11px] font-mono text-slate-400 line-through">
                               ₹{p.discountPrice.toLocaleString()}
                             </div>
                           )}
                         </td>
 
                         {/* 5. Status Toggle */}
-                        <td className="py-3 px-4">
+                        <td className="py-3 px-3 sm:px-4 whitespace-nowrap">
                           {p.approvalStatus === 'approved' && p.status !== 'inactive' ? (
                             <button
                               onClick={() => handleToggleProductStatus(p)}
@@ -1037,7 +1033,7 @@ export default function AdminProductsPage() {
                         </td>
 
                         {/* 6. Actions */}
-                        <td className="py-3 px-4 text-right">
+                        <td className="py-3 px-3 sm:px-4 text-right whitespace-nowrap">
                           <div className="inline-flex items-center gap-1.5 justify-end">
                             {/* 1. Edit Button */}
                             <button
@@ -1136,11 +1132,10 @@ export default function AdminProductsPage() {
                           type="button"
                           onClick={() => handlePageChange(p)}
                           disabled={loading}
-                          className={`min-w-8 h-8 rounded-lg text-xs font-black transition-all cursor-pointer ${
-                            currentPage === p
-                              ? 'bg-indigo-600 text-white shadow-xs'
-                              : 'text-slate-600 hover:bg-slate-100'
-                          }`}
+                          className={`min-w-8 h-8 rounded-lg text-xs font-black transition-all cursor-pointer ${currentPage === p
+                            ? 'bg-indigo-600 text-white shadow-xs'
+                            : 'text-slate-600 hover:bg-slate-100'
+                            }`}
                         >
                           {p}
                         </button>
@@ -1663,20 +1658,16 @@ export default function AdminProductsPage() {
               </div>
             ) : (
               <div className="flex items-center gap-2">
-                <div className="relative flex-1">
-                  <select
+                <div className="flex-1">
+                  <Dropdown
                     value={newCompanyName}
-                    onChange={(e) => setNewCompanyName(e.target.value)}
-                    className="w-full px-3 py-2.5 text-xs bg-zinc-50 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium text-zinc-800 cursor-pointer appearance-none truncate pr-8"
-                  >
-                    <option value="">-- Select Company --</option>
-                    {companyNames.map((comp) => (
-                      <option key={comp} value={comp}>
-                        {comp}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown className="w-3.5 h-3.5 text-zinc-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    onChange={(val) => setNewCompanyName(val)}
+                    options={[
+                      { value: '', label: '-- Select Company --' },
+                      ...companyNames.map((comp) => ({ value: comp, label: comp }))
+                    ]}
+                    placeholder="-- Select Company --"
+                  />
                 </div>
                 <button
                   type="button"
@@ -1700,7 +1691,7 @@ export default function AdminProductsPage() {
               Product Price (₹ INR) <span className="text-rose-500">*</span>
             </label>
             <div className="relative">
-              <DollarSign className="w-4 h-4 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <div className="w-4 h-4 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2" >₹</div>
               <input
                 type="number"
                 required
@@ -1713,22 +1704,14 @@ export default function AdminProductsPage() {
             </div>
           </div>
 
-          {/* Category */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-zinc-800 uppercase tracking-wider">
-              Category
-            </label>
-            <select
-              value={newCategory}
-              onChange={(e) => setNewCategory(e.target.value)}
-              className="w-full px-3 py-2 text-xs bg-zinc-50 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium cursor-pointer"
-            >
-              <option value="Fashion & Apparel">Fashion & Apparel</option>
-              <option value="Jewelry & Silverware">Jewelry & Silverware</option>
-              <option value="Home Decor & Crafts">Home Decor & Crafts</option>
-              <option value="Other Custom Craft">Other Custom Craft</option>
-            </select>
-          </div>
+          {/* Category using Common Dropdown */}
+          <Dropdown
+            label="Category"
+            value={newCategory}
+            onChange={(val) => setNewCategory(val)}
+            options={dynamicCategoryNames}
+            placeholder="Select Category"
+          />
         </form>
       </Modal>
 
@@ -1917,20 +1900,16 @@ export default function AdminProductsPage() {
               </div>
             ) : (
               <div className="flex items-center gap-2">
-                <div className="relative flex-1">
-                  <select
+                <div className="flex-1">
+                  <Dropdown
                     value={editCompanyName}
-                    onChange={(e) => setEditCompanyName(e.target.value)}
-                    className="w-full px-3 py-2.5 text-xs bg-zinc-50 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium text-zinc-800 cursor-pointer appearance-none truncate pr-8"
-                  >
-                    <option value="">-- Select Company --</option>
-                    {companyNames.map((comp) => (
-                      <option key={comp} value={comp}>
-                        {comp}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown className="w-3.5 h-3.5 text-zinc-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    onChange={(val) => setEditCompanyName(val)}
+                    options={[
+                      { value: '', label: '-- Select Company --' },
+                      ...companyNames.map((comp) => ({ value: comp, label: comp }))
+                    ]}
+                    placeholder="-- Select Company --"
+                  />
                 </div>
                 <button
                   type="button"
@@ -1967,22 +1946,14 @@ export default function AdminProductsPage() {
             </div>
           </div>
 
-          {/* Category */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-zinc-800 uppercase tracking-wider">
-              Category
-            </label>
-            <select
-              value={editCategory}
-              onChange={(e) => setEditCategory(e.target.value)}
-              className="w-full px-3 py-2 text-xs bg-zinc-50 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium cursor-pointer"
-            >
-              <option value="Fashion & Apparel">Fashion & Apparel</option>
-              <option value="Jewelry & Silverware">Jewelry & Silverware</option>
-              <option value="Home Decor & Crafts">Home Decor & Crafts</option>
-              <option value="Other Custom Craft">Other Custom Craft</option>
-            </select>
-          </div>
+          {/* Category using Common Dropdown */}
+          <Dropdown
+            label="Category"
+            value={editCategory}
+            onChange={(val) => setEditCategory(val)}
+            options={dynamicCategoryNames}
+            placeholder="Select Category"
+          />
         </form>
       </Modal>
 

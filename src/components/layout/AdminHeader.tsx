@@ -11,7 +11,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({ title = 'Dashboard Ove
   return (
     <header className="h-20 bg-white border-b border-zinc-200/80 px-8 flex items-center justify-between sticky top-0 z-30 shadow-2xs">
       <div>
-        <h2 className="text-xl font-extrabold text-zinc-900 tracking-tight">{title}</h2>
+        <h2 className="text-xl font-bold text-zinc-900 tracking-tight">{title}</h2>
         <p className="text-xs text-zinc-500 font-medium mt-0.5">Real-time artisan inquiries and operations monitoring</p>
       </div>
 

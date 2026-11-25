@@ -65,9 +65,9 @@ export const AdminSidebar = () => {
   ];
 
   return (
-    <aside className="w-68 min-h-screen bg-white text-zinc-800 border-r border-zinc-200/80 flex flex-col shrink-0 select-none shadow-xs">
+    <aside className="w-68 h-screen sticky top-0 bg-white text-zinc-800 border-r border-zinc-200/80 flex flex-col shrink-0 select-none shadow-xs z-30">
       {/* Brand Logo Header */}
-      <div className="h-20 flex items-center px-6 border-b border-zinc-100">
+      <div className="h-20 flex items-center px-6 border-b border-zinc-100 shrink-0">
         <div className="flex items-center gap-3">
           <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-indigo-700 via-indigo-600 to-indigo-500 flex items-center justify-center font-bold text-white shadow-md shadow-indigo-600/20 text-lg">
             A
@@ -83,7 +83,7 @@ export const AdminSidebar = () => {
       </div>
 
       {/* Navigation Links */}
-      <nav className="flex-1 p-5 space-y-2">
+      <nav className="flex-1 p-5 space-y-2 overflow-y-auto">
         <div className="px-3 pb-2 text-xs font-bold uppercase tracking-wider text-zinc-400">
           Core Workflows
         </div>
@@ -119,7 +119,7 @@ export const AdminSidebar = () => {
       </nav>
 
       {/* User Info & Sign Out */}
-      <div className="p-5 border-t border-zinc-100 space-y-3 bg-zinc-50/50">
+      <div className="p-5 border-t border-zinc-100 space-y-3 bg-zinc-50/50 shrink-0">
         <div className="p-3 bg-white rounded-xl border border-zinc-200/80 shadow-2xs">
           <p className="font-bold text-zinc-900 text-sm truncate">{userName}</p>
           <p className="text-xs text-zinc-500 font-medium">superadmin@ambalifestyle.com</p>

@@ -41,6 +41,7 @@ import { AdminHeader } from '@/components/layout/AdminHeader';
 import { apiClient, API_ENDPOINTS } from '@/lib/api';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
+import { Dropdown } from '@/components/ui/Dropdown';
 
 export interface InquiryMessage {
   _id?: string;
@@ -443,37 +444,37 @@ export default function AdminInquiriesPage() {
     switch (status) {
       case 'pending':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
-            <Clock className="w-3.5 h-3.5 text-amber-600" /> Pending
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
+            <Clock className="w-3 h-3 text-amber-600" /> Pending
           </span>
         );
       case 'in_review':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-sky-50 text-sky-800 border border-sky-200">
-            <Sparkles className="w-3.5 h-3.5 text-sky-600" /> Review
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-bold bg-sky-50 text-sky-800 border border-sky-200">
+            <Sparkles className="w-3 h-3 text-sky-600" /> Review
           </span>
         );
       case 'quoted':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-purple-50 text-purple-800 border border-purple-200">
-            <DollarSign className="w-3.5 h-3.5 text-purple-600" /> Quoted
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-bold bg-purple-50 text-purple-800 border border-purple-200">
+            <DollarSign className="w-3 h-3 text-purple-600" /> Quoted
           </span>
         );
       case 'approved':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Approval
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+            <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Approval
           </span>
         );
       case 'rejected':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-rose-50 text-rose-800 border border-rose-200">
-            <X className="w-3.5 h-3.5 text-rose-600" /> Rejected
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-bold bg-rose-50 text-rose-800 border border-rose-200">
+            <X className="w-3 h-3 text-rose-600" /> Rejected
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-zinc-100 text-zinc-800">
+          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-bold bg-zinc-100 text-zinc-800">
             {status}
           </span>
         );
@@ -484,25 +485,25 @@ export default function AdminInquiriesPage() {
     switch (category) {
       case 'fashion':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-pink-50 text-pink-700 border border-pink-200 shadow-2xs">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold bg-pink-50 text-pink-700 border border-pink-200 shadow-2xs whitespace-nowrap">
             <Scissors className="w-3 h-3 text-pink-600 stroke-[2.2]" /> Fashion & Apparel
           </span>
         );
       case 'jewelry':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200 shadow-2xs">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200 shadow-2xs whitespace-nowrap">
             <Crown className="w-3 h-3 text-amber-600 stroke-[2.2]" /> Jewelry & Silver
           </span>
         );
       case 'home_decor':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 shadow-2xs">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 shadow-2xs whitespace-nowrap">
             <Armchair className="w-3 h-3 text-emerald-600 stroke-[2.2]" /> Home Decor
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-purple-50 text-purple-800 border border-purple-200 shadow-2xs">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold bg-purple-50 text-purple-800 border border-purple-200 shadow-2xs whitespace-nowrap">
             <Wand2 className="w-3 h-3 text-purple-600 stroke-[2.2]" /> Custom Craft
           </span>
         );
@@ -521,7 +522,7 @@ export default function AdminInquiriesPage() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
                   Customer Inquiries & Requirements
                 </h1>
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
@@ -855,17 +856,17 @@ export default function AdminInquiriesPage() {
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-50/90 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
+                  <thead className="bg-slate-50/90 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[11px]">
                     <tr>
-                      <th className="py-2.5 px-3 whitespace-nowrap">Inquiry Ref</th>
-                      <th className="py-2.5 px-3 whitespace-nowrap">Category</th>
-                      <th className="py-2.5 px-3">Product Details</th>
-                      <th className="py-2.5 px-3">Dimensions / Size</th>
-                      <th className="py-2.5 px-3">Customer Info</th>
-                      <th className="py-2.5 px-3 whitespace-nowrap">Quotation</th>
-                      <th className="py-2.5 px-3 whitespace-nowrap">Status</th>
-                      <th className="py-2.5 px-3 whitespace-nowrap">Submitted</th>
-                      <th className="py-2.5 px-3 text-right whitespace-nowrap">Action</th>
+                      <th className="py-3 px-2.5 whitespace-nowrap">Inquiry Ref</th>
+                      <th className="py-3 px-2 whitespace-nowrap">Category</th>
+                      <th className="py-3 px-2.5">Product Details</th>
+                      <th className="py-3 px-2">Dimensions / Size</th>
+                      <th className="py-3 px-2">Customer Info</th>
+                      <th className="py-3 px-2 whitespace-nowrap">Quotation</th>
+                      <th className="py-3 px-2 whitespace-nowrap">Status</th>
+                      <th className="py-3 px-2 whitespace-nowrap">Submitted</th>
+                      <th className="py-3 px-2.5 text-right whitespace-nowrap">Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 bg-white">
@@ -874,20 +875,20 @@ export default function AdminInquiriesPage() {
                       const primaryImage = hasImage ? inq.images![0] : '';
                       return (
                         <tr key={inq._id || inq.inquiryNumber} className="hover:bg-slate-50/75 transition-colors">
-                          <td className="py-2.5 px-3 whitespace-nowrap align-middle">
-                            <span className="font-mono font-bold text-indigo-700 text-[11px] bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-200/80 inline-block">
+                          <td className="py-3 px-2.5 whitespace-nowrap align-middle">
+                            <span className="font-mono font-bold text-indigo-700 text-xs bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-200/80 inline-block">
                               #{inq.inquiryNumber}
                             </span>
                           </td>
-                          <td className="py-2.5 px-3 whitespace-nowrap align-middle">
+                          <td className="py-3 px-2 whitespace-nowrap align-middle">
                             {getCategoryBadge(inq.category)}
                           </td>
-                          <td className="py-2.5 px-3 align-middle">
-                            <div className="flex items-center gap-2.5">
+                          <td className="py-3 px-2.5 align-middle">
+                            <div className="flex items-center gap-2">
                               {hasImage ? (
                                 <div
                                   onClick={() => setIsImagePreviewOpen(primaryImage)}
-                                  className="w-9 h-9 rounded-lg overflow-hidden border border-slate-200 shrink-0 cursor-pointer relative group bg-slate-100 shadow-2xs"
+                                  className="w-8 h-8 rounded-lg overflow-hidden border border-slate-200 shrink-0 cursor-pointer relative group bg-slate-100 shadow-2xs"
                                   title="Click to view image"
                                 >
                                   <img
@@ -901,13 +902,13 @@ export default function AdminInquiriesPage() {
                                 </div>
                               ) : (
                                 <div
-                                  className="w-9 h-9 rounded-lg border border-dashed border-slate-200 shrink-0 flex flex-col items-center justify-center bg-slate-50 text-slate-400"
+                                  className="w-8 h-8 rounded-lg border border-dashed border-slate-200 shrink-0 flex flex-col items-center justify-center bg-slate-50 text-slate-400"
                                   title="No photo attached"
                                 >
                                   <ImageOff className="w-3.5 h-3.5 text-slate-300" />
                                 </div>
                               )}
-                              <div className="min-w-0 max-w-[160px]">
+                              <div className="min-w-0 max-w-[130px]">
                                 <div className="flex items-center gap-1.5 flex-wrap">
                                   <p className="font-bold text-slate-900 text-xs leading-snug truncate" title={inq.name}>{inq.name}</p>
                                   {getUnseenCount(inq) > 0 && (
@@ -920,52 +921,52 @@ export default function AdminInquiriesPage() {
                                   )}
                                 </div>
                                 {inq.description && (
-                                  <p className="text-[11px] text-slate-500 truncate mt-0.5" title={inq.description}>
+                                  <p className="text-xs text-slate-500 truncate mt-0.5" title={inq.description}>
                                     {inq.description}
                                   </p>
                                 )}
                               </div>
                             </div>
                           </td>
-                          <td className="py-2.5 px-3 align-middle">
-                            <span className="font-semibold text-slate-800 bg-slate-100/90 px-2 py-0.5 rounded-md text-[11px] border border-slate-200/60 block truncate max-w-[140px]" title={inq.size || 'Standard'}>
+                          <td className="py-3 px-2 align-middle">
+                            <span className="font-semibold text-slate-800 bg-slate-100/90 px-2 py-0.5 rounded-md text-xs border border-slate-200/60 block truncate max-w-[110px]" title={inq.size || 'Standard'}>
                               {inq.size || 'Standard'}
                             </span>
-                            <span className="text-slate-400 block text-[10px] mt-0.5 font-medium">
-                              Qty: <strong className="text-slate-600">{inq.quantity || 1}</strong> unit(s)
+                            <span className="text-slate-500 block text-[11px] mt-0.5 font-medium">
+                              Qty: <strong className="text-slate-700 font-bold">{inq.quantity || 1}</strong> unit(s)
                             </span>
                           </td>
-                          <td className="py-2.5 px-3 align-middle">
-                            <p className="font-semibold text-slate-800 text-[11px] truncate max-w-[140px]" title={inq.email}>{inq.email}</p>
+                          <td className="py-3 px-2 align-middle">
+                            <p className="font-semibold text-slate-800 text-xs truncate max-w-[125px]" title={inq.email}>{inq.email}</p>
                             {inq.phone ? (
-                              <p className="text-[10px] text-slate-500 font-mono mt-0.5">{inq.phone}</p>
+                              <p className="text-[11px] text-slate-500 font-mono mt-0.5">{inq.phone}</p>
                             ) : (
-                              <span className="text-slate-400 text-[10px] italic">No phone</span>
+                              <span className="text-slate-400 text-[11px] italic">No phone</span>
                             )}
                           </td>
-                          <td className="py-2.5 px-3 font-bold align-middle whitespace-nowrap">
+                          <td className="py-3 px-2 font-bold align-middle whitespace-nowrap">
                             {inq.quotedPrice && inq.quotedPrice > 0 ? (
                               <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 inline-block font-mono font-bold text-xs">
                                 ₹{inq.quotedPrice.toLocaleString()}
                               </span>
                             ) : (
-                              <span className="text-slate-400 font-normal italic text-xs">Pending Quote</span>
+                              <span className="text-slate-400 font-medium italic text-xs">Pending Quote</span>
                             )}
                           </td>
-                          <td className="py-2.5 px-3 align-middle whitespace-nowrap">
+                          <td className="py-3 px-2 align-middle whitespace-nowrap">
                             {getStatusBadge(inq.status)}
                           </td>
-                          <td className="py-2.5 px-3 text-slate-500 text-xs whitespace-nowrap align-middle">
+                          <td className="py-3 px-2 text-slate-500 text-xs whitespace-nowrap align-middle">
                             {inq.createdAt ? (
                               <div>
-                                <span className="font-semibold text-slate-700 block text-[11px]">{new Date(inq.createdAt).toLocaleDateString()}</span>
-                                <span className="text-slate-400 text-[10px]">{new Date(inq.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                <span className="font-semibold text-slate-700 block text-xs">{new Date(inq.createdAt).toLocaleDateString()}</span>
+                                <span className="text-slate-400 text-[11px]">{new Date(inq.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                               </div>
                             ) : (
                               'Today'
                             )}
                           </td>
-                          <td className="py-2.5 px-3 text-right align-middle whitespace-nowrap">
+                          <td className="py-3 px-2.5 text-right align-middle whitespace-nowrap">
                             <div className="flex items-center justify-end gap-1">
                               <button
                                 type="button"
@@ -1055,11 +1056,10 @@ export default function AdminInquiriesPage() {
                           type="button"
                           onClick={() => handlePageChange(p)}
                           disabled={loading}
-                          className={`min-w-8 h-8 rounded-lg text-xs font-black transition-all cursor-pointer ${
-                            currentPage === p
-                              ? 'bg-indigo-600 text-white shadow-xs shadow-indigo-600/30'
-                              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                          }`}
+                          className={`min-w-8 h-8 rounded-lg text-xs font-black transition-all cursor-pointer ${currentPage === p
+                            ? 'bg-indigo-600 text-white shadow-xs shadow-indigo-600/30'
+                            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                            }`}
                         >
                           {p}
                         </button>
@@ -1317,22 +1317,19 @@ export default function AdminInquiriesPage() {
               {/* RIGHT COLUMN: Action Controls (Status, Price, Remarks) */}
               <div className="md:col-span-5 bg-slate-50/80 p-4 rounded-xl border border-slate-200/80 flex flex-col justify-between space-y-3.5">
                 <div className="space-y-3">
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                      Status
-                    </label>
-                    <select
-                      value={newStatus}
-                      onChange={(e) => setNewStatus(e.target.value as any)}
-                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-500 focus:outline-none cursor-pointer"
-                    >
-                      <option value="pending">Pending</option>
-                      <option value="in_review">Review</option>
-                      <option value="quoted">Quoted</option>
-                      <option value="approved">Approval</option>
-                      <option value="rejected">Rejected</option>
-                    </select>
-                  </div>
+                  <Dropdown
+                    label="Status"
+                    value={newStatus}
+                    onChange={(val) => setNewStatus(val as CustomerInquiry['status'])}
+                    options={[
+                      { value: 'pending', label: 'Pending', icon: <Clock className="w-3.5 h-3.5 text-amber-600" /> },
+                      { value: 'in_review', label: 'Review', icon: <Sparkles className="w-3.5 h-3.5 text-sky-600" /> },
+                      { value: 'quoted', label: 'Quoted', icon: <DollarSign className="w-3.5 h-3.5 text-purple-600" /> },
+                      { value: 'approved', label: 'Approval', icon: <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> },
+                      { value: 'rejected', label: 'Rejected', icon: <X className="w-3.5 h-3.5 text-rose-600" /> },
+                    ]}
+                    placeholder="Select Status"
+                  />
 
                   <div>
                     <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1.5">
