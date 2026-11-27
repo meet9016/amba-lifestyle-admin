@@ -42,6 +42,7 @@ import { apiClient, API_ENDPOINTS } from '@/lib/api';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { Dropdown } from '@/components/ui/Dropdown';
+import { CountryFlag } from '@/components/ui/CountryFlag';
 
 export interface InquiryMessage {
   _id?: string;
@@ -59,6 +60,7 @@ export interface CustomerInquiry {
   inquiryNumber: string;
   email: string;
   name: string;
+  country?: string;
   category?: 'fashion' | 'jewelry' | 'home_decor' | 'other' | string;
   size: string;
   specifications?: Record<string, any>;
@@ -510,6 +512,29 @@ export default function AdminInquiriesPage() {
     }
   };
 
+  const getCountryBadge = (country?: string) => {
+    if (!country) return null;
+    const lower = country.toLowerCase();
+    let label = 'India';
+    let code = 'india';
+    if (lower.includes('aus')) {
+      label = 'Australia';
+      code = 'australia';
+    } else if (lower.includes('usa') || lower.includes('us') || lower.includes('america')) {
+      label = 'USA';
+      code = 'usa';
+    } else if (lower.includes('uk') || lower.includes('britain') || lower.includes('kingdom')) {
+      label = 'UK';
+      code = 'uk';
+    }
+    return (
+      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200 shadow-2xs whitespace-nowrap">
+        <CountryFlag country={code} className="w-4 h-2.5" />
+        <span>{label}</span>
+      </span>
+    );
+  };
+
   return (
     <div className="flex min-h-screen bg-slate-50 text-slate-900 font-sans antialiased">
       <AdminSidebar />
@@ -881,7 +906,12 @@ export default function AdminInquiriesPage() {
                             </span>
                           </td>
                           <td className="py-3 px-2 whitespace-nowrap align-middle">
-                            {getCategoryBadge(inq.category)}
+                            <div>{getCategoryBadge(inq.category)}</div>
+                            {inq.country && (
+                              <div className="mt-1">
+                                {getCountryBadge(inq.country)}
+                              </div>
+                            )}
                           </td>
                           <td className="py-3 px-2.5 align-middle">
                             <div className="flex items-center gap-2">
@@ -1102,6 +1132,7 @@ export default function AdminInquiriesPage() {
                   {isArtisanProductInquiry(selectedInquiry) ? 'Review Artisan Product Inquiry' : 'Review Custom Requirement'}
                 </h2>
                 {getCategoryBadge(selectedInquiry.category)}
+                {selectedInquiry.country && getCountryBadge(selectedInquiry.country)}
                 {isArtisanProductInquiry(selectedInquiry) ? (
                   <span className="inline-flex items-center gap-1 text-[11px] font-extrabold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-lg shadow-2xs">
                     <ShoppingBag className="w-3.5 h-3.5 text-emerald-600" /> Artisan Catalog Product

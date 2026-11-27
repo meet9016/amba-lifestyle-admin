@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { AdminSidebar } from '@/components/layout/AdminSidebar';
 import { AdminHeader } from '@/components/layout/AdminHeader';
 import { apiClient, API_ENDPOINTS } from '@/lib/api';
+import { CountryFlag } from '@/components/ui/CountryFlag';
 import {
   ClipboardList,
   Clock,
@@ -51,6 +52,7 @@ interface CustomerInquiry {
   inquiryNumber: string;
   email: string;
   name: string;
+  country?: string;
   category?: 'fashion' | 'jewelry' | 'home_decor' | 'other' | string;
   size: string;
   specifications?: Record<string, any>;
@@ -419,6 +421,29 @@ export default function AdminDashboard() {
           </span>
         );
     }
+  };
+
+  const getCountryBadge = (country?: string) => {
+    if (!country) return null;
+    const lower = country.toLowerCase();
+    let label = 'India';
+    let code = 'india';
+    if (lower.includes('aus')) {
+      label = 'Australia';
+      code = 'australia';
+    } else if (lower.includes('usa') || lower.includes('us') || lower.includes('america')) {
+      label = 'USA';
+      code = 'usa';
+    } else if (lower.includes('uk') || lower.includes('britain') || lower.includes('kingdom')) {
+      label = 'UK';
+      code = 'uk';
+    }
+    return (
+      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200 shadow-2xs whitespace-nowrap">
+        <CountryFlag country={code} className="w-4 h-2.5" />
+        <span>{label}</span>
+      </span>
+    );
   };
 
   return (
@@ -850,7 +875,12 @@ export default function AdminDashboard() {
                             </div>
                           </td>
                           <td className="py-4 px-5 whitespace-nowrap">
-                            {getCategoryBadge(inq.category)}
+                            <div>{getCategoryBadge(inq.category)}</div>
+                            {inq.country && (
+                              <div className="mt-1">
+                                {getCountryBadge(inq.country)}
+                              </div>
+                            )}
                           </td>
                           <td className="py-4 px-5">
                             <div className="flex items-center gap-3.5">
@@ -967,6 +997,7 @@ export default function AdminDashboard() {
                   {isArtisanProductInquiry(selectedInquiry) ? 'Review Artisan Product Inquiry' : 'Review Custom Requirement'}
                 </h3>
                 {getCategoryBadge(selectedInquiry.category)}
+                {selectedInquiry.country && getCountryBadge(selectedInquiry.country)}
                 {isArtisanProductInquiry(selectedInquiry) ? (
                   <span className="inline-flex items-center gap-1 text-[11px] font-extrabold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-lg shadow-2xs">
                     <ShoppingBag className="w-3.5 h-3.5 text-emerald-600" /> Artisan Catalog Product
