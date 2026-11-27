@@ -33,7 +33,10 @@ import {
   MessageSquare,
   Send,
   ShoppingBag,
-  ImageOff
+  ImageOff,
+  ChevronLeft,
+  ChevronRight,
+  ChevronDown
 } from 'lucide-react';
 
 export interface InquiryMessage {
@@ -82,6 +85,10 @@ export default function AdminDashboard() {
   const [inquiryTypeFilter, setInquiryTypeFilter] = useState<'all' | 'custom_requirement' | 'artisan_product'>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [actionSuccessMessage, setActionSuccessMessage] = useState<string | null>(null);
+
+  // Dynamic Pagination State
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [itemsPerPage, setItemsPerPage] = useState<number>(10);
 
   // Review Modal State
   const [selectedInquiry, setSelectedInquiry] = useState<CustomerInquiry | null>(null);
@@ -196,6 +203,40 @@ export default function AdminDashboard() {
 
     return matchesTimeframe && matchesCategory && matchesSearch && matchesInquiryType;
   });
+
+  // Reset page when filters or search change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [dashboardTimeframe, categoryFilter, inquiryTypeFilter, searchQuery, itemsPerPage]);
+
+  // Dynamic Pagination Calculations
+  const totalInquiriesCount = displayedInquiries.length;
+  const totalPages = Math.max(1, Math.ceil(totalInquiriesCount / itemsPerPage));
+  const paginatedInquiries = displayedInquiries.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage < 1 || newPage > totalPages || newPage === currentPage) return;
+    setCurrentPage(newPage);
+  };
+
+  const getPageNumbers = () => {
+    const pages: (number | string)[] = [];
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      if (currentPage <= 4) {
+        pages.push(1, 2, 3, 4, 5, '...', totalPages);
+      } else if (currentPage >= totalPages - 3) {
+        pages.push(1, '...', totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
+      } else {
+        pages.push(1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages);
+      }
+    }
+    return pages;
+  };
 
   const getUnseenCount = (inq: CustomerInquiry) => {
     if (!inq.messages || inq.messages.length === 0) return 0;
@@ -357,37 +398,37 @@ export default function AdminDashboard() {
     switch (status) {
       case 'pending':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
-            <Clock className="w-3.5 h-3.5 text-amber-600" /> Pending
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
+            <Clock className="w-3 h-3 text-amber-600" /> Pending
           </span>
         );
       case 'in_review':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-sky-50 text-sky-800 border border-sky-200">
-            <Sparkles className="w-3.5 h-3.5 text-sky-600" /> Review
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-bold bg-sky-50 text-sky-800 border border-sky-200">
+            <Sparkles className="w-3 h-3 text-sky-600" /> Review
           </span>
         );
       case 'quoted':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-purple-50 text-purple-800 border border-purple-200">
-            <DollarSign className="w-3.5 h-3.5 text-purple-600" /> Quoted
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-bold bg-purple-50 text-purple-800 border border-purple-200">
+            <DollarSign className="w-3 h-3 text-purple-600" /> Quoted
           </span>
         );
       case 'approved':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Approval
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+            <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Approval
           </span>
         );
       case 'rejected':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-rose-50 text-rose-800 border border-rose-200">
-            <X className="w-3.5 h-3.5 text-rose-600" /> Rejected
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-bold bg-rose-50 text-rose-800 border border-rose-200">
+            <X className="w-3 h-3 text-rose-600" /> Rejected
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-zinc-100 text-zinc-800">
+          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-bold bg-zinc-100 text-zinc-800">
             {status}
           </span>
         );
@@ -398,26 +439,27 @@ export default function AdminDashboard() {
     switch (category) {
       case 'fashion':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-pink-50 text-pink-700 border border-pink-200 shadow-2xs">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold bg-pink-50 text-pink-700 border border-pink-200 shadow-2xs whitespace-nowrap">
             <Scissors className="w-3 h-3 text-pink-600 stroke-[2.2]" /> Fashion & Apparel
           </span>
         );
       case 'jewelry':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200 shadow-2xs">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200 shadow-2xs whitespace-nowrap">
             <Crown className="w-3 h-3 text-amber-600 stroke-[2.2]" /> Jewelry & Silver
           </span>
         );
       case 'home_decor':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 shadow-2xs">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 shadow-2xs whitespace-nowrap">
             <Armchair className="w-3 h-3 text-emerald-600 stroke-[2.2]" /> Home Decor
           </span>
         );
+      case 'other':
       default:
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-purple-50 text-purple-800 border border-purple-200 shadow-2xs">
-            <Wand2 className="w-3 h-3 text-purple-600 stroke-[2.2]" /> Custom Craft
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200 shadow-2xs whitespace-nowrap">
+            <Wand2 className="w-3 h-3 text-indigo-600 stroke-[2.2]" /> Custom Craft
           </span>
         );
     }
@@ -818,63 +860,79 @@ export default function AdminDashboard() {
                 <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
                   {dashboardTimeframe === 'today'
                     ? 'No requirements submitted today yet. New customer submissions will appear here.'
-                    : 'No requirements match your search filter.'}
+                    : 'No requirements match your current filter or search query.'}
                 </p>
+                {(dashboardTimeframe !== 'all' || categoryFilter !== 'all' || inquiryTypeFilter !== 'all' || searchQuery) && (
+                  <button
+                    onClick={() => {
+                      setDashboardTimeframe('all');
+                      setCategoryFilter('all');
+                      setInquiryTypeFilter('all');
+                      setSearchQuery('');
+                    }}
+                    className="mt-4 px-4 py-2 bg-indigo-50 text-indigo-700 border border-indigo-200 text-xs font-bold rounded-xl hover:bg-indigo-100 transition-colors cursor-pointer inline-flex items-center gap-1.5"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    <span>Clear All Filters</span>
+                  </button>
+                )}
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm">
-                  <thead className="bg-slate-100/70 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-xs">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-50/90 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[11px]">
                     <tr>
-                      <th className="py-4 px-5">Inquiry ID</th>
-                      <th className="py-4 px-5">Category</th>
-                      <th className="py-4 px-5">Product Details</th>
-                      <th className="py-4 px-5">Dimensions / Size</th>
-                      <th className="py-4 px-5">Email</th>
-                      <th className="py-4 px-5">Quotation</th>
-                      <th className="py-4 px-5">Status</th>
-                      <th className="py-4 px-5">Date</th>
-                      <th className="py-4 px-5 text-right">Action</th>
+                      <th className="py-3 px-2.5 whitespace-nowrap">Inquiry Ref</th>
+                      <th className="py-3 px-2 whitespace-nowrap">Category</th>
+                      <th className="py-3 px-2.5">Product Details</th>
+                      <th className="py-3 px-2">Dimensions / Size</th>
+                      <th className="py-3 px-2">Customer Info</th>
+                      <th className="py-3 px-2 whitespace-nowrap">Quotation</th>
+                      <th className="py-3 px-2 whitespace-nowrap">Status</th>
+                      <th className="py-3 px-2 whitespace-nowrap">Submitted</th>
+                      <th className="py-3 px-2.5 text-right whitespace-nowrap">Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 bg-white">
-                    {displayedInquiries.map((inq) => {
+                    {paginatedInquiries.map((inq) => {
                       const hasImage = Boolean(inq.images && inq.images.length > 0 && inq.images[0]);
                       const primaryImg = hasImage ? inq.images![0] : '';
                       const newToday = isToday(inq.createdAt);
                       return (
-                        <tr key={inq._id || inq.inquiryNumber} className="hover:bg-slate-50/80 transition-colors">
-                          <td className="py-4 px-5">
-                            <span className="font-mono font-bold text-indigo-700 text-sm">
+                        <tr key={inq._id || inq.inquiryNumber} className="hover:bg-slate-50/75 transition-colors">
+                          <td className="py-3 px-2.5 whitespace-nowrap align-middle">
+                            <span className="font-mono font-bold text-indigo-700 text-xs bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-200/80 inline-block">
                               #{inq.inquiryNumber}
                             </span>
                             {newToday && (
-                              <span className="block text-[11px] text-emerald-600 font-bold mt-0.5">
+                              <span className="block text-[10px] text-emerald-600 font-bold mt-0.5">
                                 ● New Today
                               </span>
                             )}
                             {inq.messages && inq.messages.length > 0 && (
-                              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-full mt-1">
-                                <MessageSquare className="w-3 h-3 text-indigo-600" />
-                                {inq.messages.length} msg{inq.messages.length > 1 ? 's' : ''}
-                                {inq.messages[inq.messages.length - 1]?.sender === 'customer' && (
-                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse ml-0.5" title="New customer message" />
-                                )}
-                              </span>
+                              <div className="mt-1">
+                                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-1.5 py-0.5 rounded-full">
+                                  <MessageSquare className="w-2.5 h-2.5 text-indigo-600" />
+                                  {inq.messages.length} msg{inq.messages.length > 1 ? 's' : ''}
+                                  {inq.messages[inq.messages.length - 1]?.sender === 'customer' && (
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse ml-0.5" title="New customer message" />
+                                  )}
+                                </span>
+                              </div>
                             )}
                             <div className="mt-1">
                               {isArtisanProductInquiry(inq) ? (
-                                <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
+                                <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-emerald-800 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded-md">
                                   <ShoppingBag className="w-2.5 h-2.5 text-emerald-600" /> Artisan Product
                                 </span>
                               ) : (
-                                <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md">
+                                <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-amber-800 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded-md">
                                   <Sparkles className="w-2.5 h-2.5 text-amber-600" /> Custom Studio
                                 </span>
                               )}
                             </div>
                           </td>
-                          <td className="py-4 px-5 whitespace-nowrap">
+                          <td className="py-3 px-2 whitespace-nowrap align-middle">
                             <div>{getCategoryBadge(inq.category)}</div>
                             {inq.country && (
                               <div className="mt-1">
@@ -882,39 +940,37 @@ export default function AdminDashboard() {
                               </div>
                             )}
                           </td>
-                          <td className="py-4 px-5">
-                            <div className="flex items-center gap-3.5">
+                          <td className="py-3 px-2.5 align-middle">
+                            <div className="flex items-center gap-2">
                               {hasImage ? (
                                 <div
                                   onClick={() => setPreviewImageModal(primaryImg)}
-                                  className="w-12 h-12 rounded-xl overflow-hidden border border-slate-200 shrink-0 cursor-pointer relative group bg-slate-100 shadow-2xs"
-                                  title="Click to enlarge photo"
+                                  className="w-8 h-8 rounded-lg overflow-hidden border border-slate-200 shrink-0 cursor-pointer relative group bg-slate-100 shadow-2xs"
+                                  title="Click to view image"
                                 >
                                   <img
                                     src={primaryImg}
                                     alt={inq.name}
-                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform"
+                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-200"
                                   />
                                   <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                                    <Eye className="w-4 h-4 text-white" />
+                                    <Eye className="w-3.5 h-3.5 text-white" />
                                   </div>
                                 </div>
                               ) : (
                                 <div
-                                  className="w-12 h-12 rounded-xl border border-dashed border-slate-200 shrink-0 flex flex-col items-center justify-center bg-slate-50 text-slate-400"
+                                  className="w-8 h-8 rounded-lg border border-dashed border-slate-200 shrink-0 flex flex-col items-center justify-center bg-slate-50 text-slate-400"
                                   title="No photo attached"
                                 >
-                                  <ImageOff className="w-4 h-4 text-slate-300" />
-                                  <span className="text-[8px] font-bold text-slate-400 uppercase mt-0.5">None</span>
+                                  <ImageOff className="w-3.5 h-3.5 text-slate-300" />
                                 </div>
                               )}
-                              <div className="min-w-0">
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  <p className="font-bold text-slate-900 text-sm leading-snug">{inq.name}</p>
-                                  {getCategoryBadge(inq.category)}
+                              <div className="min-w-0 max-w-[130px]">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <p className="font-bold text-slate-900 text-xs leading-snug truncate" title={inq.name}>{inq.name}</p>
                                   {getUnseenCount(inq) > 0 && (
                                     <span
-                                      className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-[11px] font-black bg-red-600 text-white shadow-xs"
+                                      className="inline-flex items-center justify-center min-w-[18px] h-4 px-1 rounded-full text-[10px] font-black bg-red-600 text-white shadow-xs"
                                       title={`${getUnseenCount(inq)} new message(s)`}
                                     >
                                       {getUnseenCount(inq)}
@@ -922,55 +978,62 @@ export default function AdminDashboard() {
                                   )}
                                 </div>
                                 {inq.description && (
-                                  <p className="text-xs text-slate-500 line-clamp-1 max-w-xs mt-0.5">
+                                  <p className="text-xs text-slate-500 truncate mt-0.5" title={inq.description}>
                                     {inq.description}
                                   </p>
                                 )}
                               </div>
                             </div>
                           </td>
-                          <td className="py-4 px-5">
-                            <span className="font-semibold text-slate-800 bg-slate-100 px-2.5 py-1 rounded-lg text-xs">
-                              {inq.size}
+                          <td className="py-3 px-2 align-middle">
+                            <span className="font-semibold text-slate-800 bg-slate-100/90 px-2 py-0.5 rounded-md text-xs border border-slate-200/60 block truncate max-w-[110px]" title={inq.size || 'Standard'}>
+                              {inq.size || 'Standard'}
                             </span>
-                            <span className="text-slate-400 block text-xs mt-1">
-                              Qty: {inq.quantity || 1} unit(s)
+                            <span className="text-slate-500 block text-[11px] mt-0.5 font-medium">
+                              Qty: <strong className="text-slate-700 font-bold">{inq.quantity || 1}</strong> unit(s)
                             </span>
                           </td>
-                          <td className="py-4 px-5">
-                            <p className="font-semibold text-slate-800 text-sm">{inq.email}</p>
-                            {inq.phone && <p className="text-xs text-slate-400 mt-0.5">{inq.phone}</p>}
+                          <td className="py-3 px-2 align-middle">
+                            <p className="font-semibold text-slate-800 text-xs truncate max-w-[125px]" title={inq.email}>{inq.email}</p>
+                            {inq.phone ? (
+                              <p className="text-[11px] text-slate-500 font-mono mt-0.5">{inq.phone}</p>
+                            ) : (
+                              <span className="text-slate-400 text-[11px] italic">No phone</span>
+                            )}
                           </td>
-                          <td className="py-4 px-5 font-bold text-sm">
+                          <td className="py-3 px-2 font-bold align-middle whitespace-nowrap">
                             {inq.quotedPrice && inq.quotedPrice > 0 ? (
-                              <span className="text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
+                              <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 inline-block font-mono font-bold text-xs">
                                 ₹{inq.quotedPrice.toLocaleString()}
                               </span>
                             ) : (
-                              <span className="text-slate-400 font-normal italic text-xs">Not Set</span>
+                              <span className="text-slate-400 font-medium italic text-xs">Pending Quote</span>
                             )}
                           </td>
-                          <td className="py-4 px-5">
+                          <td className="py-3 px-2 align-middle whitespace-nowrap">
                             {getStatusBadge(inq.status)}
                           </td>
-                          <td className="py-4 px-5 text-slate-500 text-xs whitespace-nowrap">
+                          <td className="py-3 px-2 text-slate-500 text-xs whitespace-nowrap align-middle">
                             {inq.createdAt ? (
                               <div>
-                                <span className="font-medium text-slate-700 block">{new Date(inq.createdAt).toLocaleDateString()}</span>
+                                <span className="font-semibold text-slate-700 block text-xs">{new Date(inq.createdAt).toLocaleDateString()}</span>
                                 <span className="text-slate-400 text-[11px]">{new Date(inq.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                               </div>
                             ) : (
                               'Today'
                             )}
                           </td>
-                          <td className="py-4 px-5 text-right">
-                            <button
-                              onClick={() => openReviewModal(inq)}
-                              className="px-3.5 py-1.5 bg-indigo-50 hover:bg-indigo-600 hover:text-white text-indigo-700 border border-indigo-200 rounded-xl text-xs font-bold transition-all inline-flex items-center gap-1.5 cursor-pointer shadow-2xs"
-                            >
-                              <Edit3 className="w-3.5 h-3.5" />
-                              Review
-                            </button>
+                          <td className="py-3 px-2.5 text-right align-middle whitespace-nowrap">
+                            <div className="flex items-center justify-end gap-1">
+                              <button
+                                type="button"
+                                onClick={() => openReviewModal(inq)}
+                                className="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-all inline-flex items-center gap-1 cursor-pointer shadow-xs shadow-indigo-600/20"
+                              >
+                                <Edit3 className="w-3 h-3" />
+                                <span>Review</span>
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       );
@@ -979,6 +1042,96 @@ export default function AdminDashboard() {
                 </table>
               </div>
             )}
+
+            {/* PROPER MODERN PAGINATION BAR */}
+            <div className="p-3 sm:px-5 border-t border-slate-200/90 bg-slate-50/70 flex flex-col md:flex-row items-center justify-between gap-3 text-xs">
+              {/* Left: Summary text & Rows Per Page Dropdown */}
+              <div className="flex flex-wrap items-center gap-3 text-slate-600">
+                <span className="text-slate-500 text-xs">
+                  Showing <strong className="font-bold text-slate-900">{totalInquiriesCount > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0}</strong> to{' '}
+                  <strong className="font-bold text-slate-900">{Math.min(currentPage * itemsPerPage, totalInquiriesCount)}</strong> of{' '}
+                  <strong className="font-bold text-slate-900">{totalInquiriesCount}</strong> inquiries
+                </span>
+
+                <div className="h-3.5 w-px bg-slate-300 hidden sm:block" />
+
+                {/* 10, 20, 50 Rows Per Page Dropdown */}
+                <div className="flex items-center gap-1.5">
+                  <span className="text-slate-500 font-medium text-xs">Rows per page:</span>
+                  <div className="relative inline-flex items-center">
+                    <select
+                      value={itemsPerPage}
+                      onChange={(e) => {
+                        const newLimit = Number(e.target.value);
+                        setItemsPerPage(newLimit);
+                        setCurrentPage(1);
+                      }}
+                      className="w-14 appearance-none bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 rounded-lg pl-2 pr-5 py-1 text-xs font-bold transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 cursor-pointer shadow-2xs"
+                    >
+                      <option value={10}>10</option>
+                      <option value={20}>20</option>
+                      <option value={50}>50</option>
+                    </select>
+                    <ChevronDown className="w-3 h-3 text-slate-400 absolute right-1.5 pointer-events-none" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Right: Page Navigation Buttons */}
+              <div className="flex items-center gap-3">
+                <span className="text-slate-500 text-xs hidden sm:inline">
+                  Page <strong className="font-bold text-slate-900">{currentPage}</strong> of{' '}
+                  <strong className="font-bold text-slate-900">{totalPages}</strong>
+                </span>
+
+                <div className="inline-flex items-center p-1 bg-white rounded-xl border border-slate-200 shadow-2xs gap-1">
+                  <button
+                    type="button"
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage <= 1 || loading}
+                    className="px-2.5 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-indigo-600 disabled:opacity-40 disabled:cursor-not-allowed font-bold text-xs transition-all flex items-center gap-1 cursor-pointer"
+                    title="Previous page"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                    <span className="hidden sm:inline">Prev</span>
+                  </button>
+
+                  <div className="flex items-center gap-1 px-1">
+                    {getPageNumbers().map((p, idx) => (
+                      typeof p === 'number' ? (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => handlePageChange(p)}
+                          disabled={loading}
+                          className={`min-w-8 h-8 rounded-lg text-xs font-black transition-all cursor-pointer ${currentPage === p
+                            ? 'bg-indigo-600 text-white shadow-xs shadow-indigo-600/30'
+                            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                            }`}
+                        >
+                          {p}
+                        </button>
+                      ) : (
+                        <span key={idx} className="px-1.5 text-slate-400 font-bold">
+                          ...
+                        </span>
+                      )
+                    ))}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage >= totalPages || loading}
+                    className="px-2.5 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-indigo-600 disabled:opacity-40 disabled:cursor-not-allowed font-bold text-xs transition-all flex items-center gap-1 cursor-pointer"
+                    title="Next page"
+                  >
+                    <span className="hidden sm:inline">Next</span>
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </main>
       </div>
